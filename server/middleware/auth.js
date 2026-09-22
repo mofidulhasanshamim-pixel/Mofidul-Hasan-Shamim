@@ -1,7 +1,21 @@
 const jwt = require('jsonwebtoken');
 const db = require('../db');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'mofidul_super_secret_jwt_key_928374829103948201948291';
+// ---------------------------------------------------------------------------
+// JWT Secret — MUST come from the environment. No hardcoded fallback.
+// ---------------------------------------------------------------------------
+const isProduction = process.env.NODE_ENV === 'production';
+
+if (!process.env.JWT_SECRET) {
+  if (isProduction) {
+    console.error('[FATAL] JWT_SECRET environment variable is not set. Refusing to start in production.');
+    process.exit(1);
+  } else {
+    console.warn('[WARN]  JWT_SECRET is not set. Set it in your .env file for local development.');
+  }
+}
+
+const JWT_SECRET = process.env.JWT_SECRET;
 
 /**
  * Authentication middleware for protecting private CMS routes

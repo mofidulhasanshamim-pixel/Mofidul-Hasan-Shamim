@@ -307,30 +307,50 @@ function initSchema() {
  * Seed initial baseline data if tables are empty
  */
 function seedInitialData() {
-  // 1. Admin user
+  // ---------------------------------------------------------------------------
+  // Admin credentials — read exclusively from environment variables.
+  // In production, fail loudly if any are missing.
+  // ---------------------------------------------------------------------------
+  const isProduction = process.env.NODE_ENV === 'production';
+  const adminUsername = process.env.ADMIN_USERNAME;
+  const adminEmail    = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
+  if (!adminUsername || !adminEmail || !adminPassword) {
+    if (isProduction) {
+      console.error('[FATAL] ADMIN_USERNAME, ADMIN_EMAIL, and ADMIN_PASSWORD must all be set in production.');
+      process.exit(1);
+    } else {
+      console.warn('[WARN]  ADMIN_USERNAME / ADMIN_EMAIL / ADMIN_PASSWORD not set. Admin seeding skipped.');
+    }
+  }
+
+  // 1. Primary admin account
   const adminStmt = db.prepare('SELECT count(*) as count FROM admin_users');
   const adminRow = adminStmt.get();
-  if (adminRow.count === 0) {
+  if (adminRow.count === 0 && adminUsername && adminEmail && adminPassword) {
     const salt = bcrypt.genSaltSync(12);
-    const hash = bcrypt.hashSync('MofidulAdmin2026!', salt);
+    const hash = bcrypt.hashSync(adminPassword, salt);
     const insertAdmin = db.prepare(`
       INSERT INTO admin_users (username, email, password_hash)
       VALUES (?, ?, ?)
     `);
-    insertAdmin.run('mofidul', 'contact@mofidul.com', hash);
-    console.log('✔ Initial admin account seeded (user: mofidul)');
+    insertAdmin.run(adminUsername, adminEmail, hash);
+    console.log(`✔ Initial admin account seeded (user: ${adminUsername})`);
   }
 
-  // Also ensure 'admin' username is available
-  const adminAliasStmt = db.prepare('SELECT count(*) as count FROM admin_users WHERE username = ?');
-  if (adminAliasStmt.get('admin').count === 0) {
-    const salt = bcrypt.genSaltSync(12);
-    const hash = bcrypt.hashSync('MofidulAdmin2026!', salt);
-    db.prepare(`
-      INSERT INTO admin_users (username, email, password_hash)
-      VALUES (?, ?, ?)
-    `).run('admin', 'admin@mofidul.com', hash);
-    console.log('✔ Admin alias account seeded (user: admin)');
+  // 2. Ensure an 'admin' alias account exists (uses same env credentials)
+  if (adminUsername && adminPassword) {
+    const adminAliasStmt = db.prepare('SELECT count(*) as count FROM admin_users WHERE username = ?');
+    if (adminAliasStmt.get('admin').count === 0 && adminUsername !== 'admin') {
+      const salt = bcrypt.genSaltSync(12);
+      const hash = bcrypt.hashSync(adminPassword, salt);
+      db.prepare(`
+        INSERT INTO admin_users (username, email, password_hash)
+        VALUES (?, ?, ?)
+      `).run('admin', `admin+${adminEmail}`, hash);
+      console.log('✔ Admin alias account seeded (user: admin)');
+    }
   }
 
   // 2. Site Settings
