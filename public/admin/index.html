@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mofidul — Private CMS Dashboard</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="alternate icon" href="/favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/admin/admin.css" />
+</head>
+<body>
+
+  <!-- Minimal Full-Screen Loading Screen -->
+  <div id="intro-loader" class="intro-loader" role="status" aria-label="Loading Admin Dashboard">
+    <div class="intro-loader-backdrop"></div>
+    <div class="intro-loader-card">
+      <div class="intro-brand-wrap">
+        <span class="intro-brand-name">Mofidul</span>
+        <span class="intro-brand-dot"></span>
+      </div>
+
+      <div class="intro-progress-container">
+        <div class="intro-track-wrapper">
+          <div class="intro-progress-track">
+            <div class="intro-progress-bar" id="intro-progress-bar"></div>
+          </div>
+          <div class="intro-infinity-tracker" id="intro-infinity-tracker" aria-hidden="true">
+            <div class="infinity-glass-object">
+              <div class="infinity-glow"></div>
+              <svg class="infinity-svg" viewBox="0 0 64 36" fill="none">
+                <defs>
+                  <linearGradient id="adminInfLoopGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#38bdf8" />
+                    <stop offset="50%" stop-color="#818cf8" />
+                    <stop offset="100%" stop-color="#c084fc" />
+                  </linearGradient>
+                  <filter id="adminInfGlowFilter" x="-40%" y="-40%" width="180%" height="180%">
+                    <feGaussianBlur stdDeviation="1.8" result="blur" />
+                    <feMerge>
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
+                <path class="infinity-base" d="M18,9 C10,9 5,13 5,18 C5,23 10,27 18,27 C27,27 37,9 46,9 C54,9 59,13 59,18 C59,23 54,27 46,27 C37,27 27,9 18,9 Z" />
+                <path class="infinity-stroke" d="M18,9 C10,9 5,13 5,18 C5,23 10,27 18,27 C27,27 37,9 46,9 C54,9 59,13 59,18 C59,23 54,27 46,27 C37,27 27,9 18,9 Z" stroke="url(#adminInfLoopGrad)" filter="url(#adminInfGlowFilter)" />
+              </svg>
+              <div class="infinity-core-light"></div>
+            </div>
+          </div>
+        </div>
+        <div class="intro-progress-percent" id="intro-progress-percent">0%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1. LOGIN OVERLAY (Shown if not authenticated) -->
+  <div class="login-wrapper" id="login-overlay">
+    <div class="login-card">
+      <div class="login-header">
+        <h1 class="login-logo">MOFIDUL</h1>
+        <p class="login-subtitle">Private Portfolio CMS</p>
+      </div>
+
+      <form id="login-form">
+        <div class="form-field">
+          <label class="field-label" for="login-username">Username or Email</label>
+          <input type="text" id="login-username" class="admin-input" required autocomplete="username" />
+        </div>
+
+        <div class="form-field">
+          <label class="field-label" for="login-password">Password</label>
+          <input type="password" id="login-password" class="admin-input" required autocomplete="current-password" />
+        </div>
+
+        <div id="login-error" style="display: none; color: var(--admin-danger); font-size: 13px; margin-bottom: 16px;"></div>
+
+        <button type="submit" class="admin-btn admin-btn-primary" id="login-btn" style="width: 100%;">
+          Sign In to Dashboard
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. ADMIN MAIN SHELL -->
+  <div class="admin-shell" id="admin-shell" style="display: none;">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <div class="sidebar-header">
+        <a href="/admin" class="sidebar-brand">
+          MOFIDUL
+          <span class="sidebar-badge">CMS</span>
+        </a>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-category-label">Dashboard</div>
+        <button class="sidebar-tab-btn active" data-tab="overview">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          Overview
+        </button>
+
+        <div class="nav-category-label">Portfolio Content</div>
+        <button class="sidebar-tab-btn" data-tab="projects">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+          Projects
+        </button>
+        <button class="sidebar-tab-btn" data-tab="services">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          Services
+        </button>
+        <button class="sidebar-tab-btn" data-tab="skills">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+          Skills
+        </button>
+        <button class="sidebar-tab-btn" data-tab="experience">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+          Experience
+        </button>
+        <button class="sidebar-tab-btn" data-tab="testimonials">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          Testimonials
+        </button>
+        <button class="sidebar-tab-btn" data-tab="profile">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          Profile
+        </button>
+        <button class="sidebar-tab-btn" data-tab="media">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+          Media Library
+        </button>
+
+        <div class="nav-category-label">System &amp; Settings</div>
+        <button class="sidebar-tab-btn" data-tab="statistics">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+          Impact / Stats
+        </button>
+        <button class="sidebar-tab-btn" data-tab="messages">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+          Inquiries
+          <span class="badge-count" id="sidebar-inquiries-badge" style="display: none;">0</span>
+        </button>
+        <button class="sidebar-tab-btn" data-tab="settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          Settings
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div>
+          <div class="user-info-text" id="admin-user-display">Mofidul</div>
+          <div class="user-role-text">Administrator</div>
+        </div>
+        <button class="btn-icon-logout" id="logout-btn" title="Sign Out">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Shell -->
+    <main class="admin-main">
+      <div class="top-action-bar">
+        <div>
+          <h2 class="page-headline" id="panel-title">System Overview</h2>
+          <p class="page-subheadline" id="panel-subtitle">Review metrics and manage all live portfolio content</p>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <a href="/" target="_blank" class="view-live-link">
+            <span>View Public Site</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- ================= PANEL 1: OVERVIEW ================= -->
+      <section class="tab-panel active" id="tab-overview">
+        <div class="overview-metrics-grid">
+          <div class="metric-stat-card">
+            <div class="label-caps">PROJECTS (TOTAL)</div>
+            <div class="metric-stat-number" id="overview-projects-count">0</div>
+            <div style="font-size: 11.5px; color: var(--admin-text-muted); margin-top: 4px;">
+              <span id="overview-projects-published" style="color: var(--admin-success); font-weight: 700;">0</span> Published • 
+              <span id="overview-projects-draft" style="color: var(--admin-warning); font-weight: 700;">0</span> Draft
+            </div>
+          </div>
+          <div class="metric-stat-card">
+            <div class="label-caps">SERVICES</div>
+            <div class="metric-stat-number" id="overview-services-count">0</div>
+            <div style="font-size: 11.5px; color: var(--admin-text-muted); margin-top: 4px;">Disciplines offered</div>
+          </div>
+          <div class="metric-stat-card">
+            <div class="label-caps">SKILLS &amp; TECH</div>
+            <div class="metric-stat-number" id="overview-skills-count">0</div>
+            <div style="font-size: 11.5px; color: var(--admin-text-muted); margin-top: 4px;">Categorized proficiencies</div>
+          </div>
+          <div class="metric-stat-card">
+            <div class="label-caps">EXPERIENCE</div>
+            <div class="metric-stat-number" id="overview-experience-count">0</div>
+            <div style="font-size: 11.5px; color: var(--admin-text-muted); margin-top: 4px;">Career milestones</div>
+          </div>
+          <div class="metric-stat-card">
+            <div class="label-caps">TESTIMONIALS</div>
+            <div class="metric-stat-number" id="overview-testimonials-count">0</div>
+            <div style="font-size: 11.5px; color: var(--admin-text-muted); margin-top: 4px;">Client endorsements</div>
+          </div>
+          <div class="metric-stat-card">
+            <div class="label-caps">MEDIA ASSETS</div>
+            <div class="metric-stat-number" id="overview-media-count">0</div>
+            <div style="font-size: 11.5px; color: var(--admin-text-muted); margin-top: 4px;">Images, videos &amp; PDFs</div>
+          </div>
+          <div class="metric-stat-card">
+            <div class="label-caps">UNREAD INQUIRIES</div>
+            <div class="metric-stat-number" id="overview-inquiries-count" style="color: var(--admin-danger);">0</div>
+            <div style="font-size: 11.5px; color: var(--admin-text-muted); margin-top: 4px;">Client inquiries</div>
+          </div>
+        </div>
+
+        <div class="admin-card">
+          <div class="card-title-bar">
+            <h3 class="card-title">Quick Action Navigation</h3>
+          </div>
+          <p style="font-size: 14px; color: var(--admin-text-secondary); margin-bottom: 20px;">
+            Jump straight into editing specific portfolio elements without touching any source code.
+          </p>
+          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <button class="admin-btn admin-btn-secondary" onclick="switchTab('projects')">Manage Projects</button>
+            <button class="admin-btn admin-btn-secondary" onclick="switchTab('services')">Manage Services</button>
+            <button class="admin-btn admin-btn-secondary" onclick="switchTab('skills')">Manage Skills</button>
+            <button class="admin-btn admin-btn-secondary" onclick="switchTab('experience')">Manage Experience</button>
+            <button class="admin-btn admin-btn-secondary" onclick="switchTab('profile')">Edit Profile &amp; Resume</button>
+            <button class="admin-btn admin-btn-secondary" onclick="switchTab('media')">Media Library</button>
+            <button class="admin-btn admin-btn-secondary" onclick="switchTab('settings')">Settings &amp; Sections</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= PANEL 2: PROJECTS / WORK ================= -->
+      <section class="tab-panel" id="tab-projects" style="display: none;">
+        <div class="admin-card">
+          <div class="card-title-bar">
+            <div>
+              <h3 class="card-title">Portfolio Projects &amp; Case Studies</h3>
+              <p style="font-size: 13px; color: var(--admin-text-secondary); margin-top: 4px;">
+                Add, edit, duplicate, reorder, publish, or hide projects. Unlimited case studies supported.
+              </p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <button type="button" class="admin-btn admin-btn-primary" id="btn-add-project">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Add Project
+              </button>
+            </div>
+          </div>
+
+          <div class="items-list" id="projects-list-container">
+            <!-- Populated via admin.js -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= PANEL 3: SERVICES ================= -->
+      <section class="tab-panel" id="tab-services" style="display: none;">
+        <div class="admin-card">
+          <div class="card-title-bar">
+            <div>
+              <h3 class="card-title">Services &amp; Capabilities</h3>
+              <p style="font-size: 13px; color: var(--admin-text-secondary); margin-top: 4px;">
+                Define unlimited creative services, deliverables, benefits, and strategic processes.
+              </p>
+            </div>
+            <button type="button" class="admin-btn admin-btn-primary" id="btn-add-service">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Add Service
+            </button>
+          </div>
+
+          <div class="items-list" id="services-list-container">
+            <!-- Populated via admin.js -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= PANEL 4: SKILLS CMS ================= -->
+      <section class="tab-panel" id="tab-skills" style="display: none;">
+        <div class="admin-card">
+          <div class="card-title-bar">
+            <div>
+              <h3 class="card-title">Skills &amp; Technologies CMS</h3>
+              <p style="font-size: 13px; color: var(--admin-text-secondary); margin-top: 4px;">
+                Manage categorized skills, proficiency ratings, and related tools. Unlimited skills supported.
+              </p>
+            </div>
+            <button type="button" class="admin-btn admin-btn-primary" id="btn-add-skill">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Add Skill
+            </button>
+          </div>
+
+          <div class="items-list" id="skills-list-container">
+            <!-- Populated via admin.js -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= PANEL 5: EXPERIENCE CMS ================= -->
+      <section class="tab-panel" id="tab-experience" style="display: none;">
+        <div class="admin-card">
+          <div class="card-title-bar">
+            <div>
+              <h3 class="card-title">Career Milestones &amp; Experience CMS</h3>
+              <p style="font-size: 13px; color: var(--admin-text-secondary); margin-top: 4px;">
+                Manage career timeline entries, leadership roles, responsibilities, and achievements.
+              </p>
+            </div>
+            <button type="button" class="admin-btn admin-btn-primary" id="btn-add-experience">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Add Experience
+            </button>
+          </div>
+
+          <div class="items-list" id="experience-list-container">
+            <!-- Populated via admin.js -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= PANEL 6: TESTIMONIALS ================= -->
+      <section class="tab-panel" id="tab-testimonials" style="display: none;">
+        <div class="admin-card">
+          <div class="card-title-bar">
+            <div>
+              <h3 class="card-title">Client Testimonials &amp; Endorsements</h3>
+              <p style="font-size: 13px; color: var(--admin-text-secondary); margin-top: 4px;">
+                Add real client reviews, upload avatars, and toggle visibility.
+              </p>
+            </div>
+            <button type="button" class="admin-btn admin-btn-primary" id="btn-add-testimonial">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Add Testimonial
+            </button>
+          </div>
+
+          <div class="items-list" id="testimonials-list-container">
+            <!-- Populated via admin.js -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= PANEL 7: PROFILE & ABOUT CMS ================= -->
+      <section class="tab-panel" id="tab-profile" style="display: none;">
+        <!-- Dedicated Profile Image Management -->
+        <div class="admin-card">
+          <div class="card-title-bar">
+            <h3 class="card-title">Profile Portrait Image</h3>
+            <span class="status-pill active" id="profile-status-badge">Live on Website</span>
+          </div>
+
+          <div style="display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap;">
+            <div class="upload-preview-wrap" style="width: 180px; aspect-ratio: 4/5; background: var(--admin-input-bg); display: flex; align-items: center; justify-content: center;">
+              <img id="hero-profile-preview" src="" alt="Profile preview" style="display: none; width: 100%; height: 100%; object-fit: cover;" />
+              <div id="hero-profile-empty" style="text-align: center; padding: 20px; color: var(--admin-text-muted);">
+                <div style="font-family: var(--font-serif); font-size: 48px; color: var(--admin-accent);">M</div>
+                <div style="font-size: 11px; margin-top: 4px;">No profile photo</div>
+              </div>
+            </div>
+
+            <div style="flex-grow: 1; min-width: 280px;">
+              <div class="image-upload-zone" id="hero-profile-dropzone">
+                <input type="file" id="hero-profile-file-input" accept="image/*" style="display: none;" />
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="opacity: 0.6; margin-bottom: 8px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <div style="font-weight: 600; font-size: 14px;">Upload or drop portrait photo</div>
+                <div style="font-size: 12px; color: var(--admin-text-muted); margin-top: 4px;">Supported formats: PNG, JPG, WEBP, AVIF</div>
+              </div>
+
+              <div class="preview-actions" style="margin-top: 12px;">
+                <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm" id="btn-trigger-profile-upload">Upload Portrait</button>
+                <button type="button" class="admin-btn admin-btn-danger admin-btn-sm" id="btn-remove-profile-photo" style="display: none;">Remove Photo</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Official Curriculum Vitae / Resume PDF Uploader -->
+        <div class="admin-card">
+          <div class="card-title-bar">
+            <h3 class="card-title">Curriculum Vitae / Official Resume (PDF)</h3>
+            <span class="status-pill active" id="resume-status-badge">Downloadable on Website</span>
+          </div>
+
+          <p style="font-size: 13.5px; color: var(--admin-text-secondary); margin-bottom: 16px;">
+            Upload your official CV in PDF format. Visitors can download this directly from the About section.
+          </p>
+
+          <div class="resume-uploader-card">
+            <div class="resume-file-info" id="resume-current-info" style="display: none;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--admin-accent)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+              <div style="flex-grow: 1;">
+                <div style="font-weight: 700; font-size: 13.5px;" id="resume-file-label">Official Resume (PDF)</div>
+                <a href="#" id="resume-file-link" target="_blank" style="font-size: 12px; color: var(--admin-accent); text-decoration: underline;">View Current PDF Document</a>
+              </div>
+            </div>
+
+            <div style="margin-top: 14px;">
+              <input type="file" id="resume-file-input" accept="application/pdf" style="display: none;" />
+              <button type="button" class="admin-btn admin-btn-secondary" id="btn-upload-resume">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                Upload New Resume PDF
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hero Content Fields -->
+        <div class="admin-card">
+          <div class="card-title-bar">
+            <h3 class="card-title">Hero Typography &amp; Positioning</h3>
+          </div>
+
+          <form id="hero-content-form">
+            <div class="form-grid-2">
+              <div class="form-field">
+                <label class="field-label" for="field-hero-greeting">Greeting / Eyebrow</label>
+                <input type="text" id="field-hero-greeting" class="admin-input" />
+              </div>
+              <div class="form-field">
+                <label class="field-label" for="field-hero-name">Name</label>
+                <input type="text" id="field-hero-name" class="admin-input" required />
+              </div>
+            </div>
+
+            <div class="form-field">
+              <label class="field-label" for="field-hero-role">Role / Headline Title</label>
+              <input type="text" id="field-hero-role" class="admin-input" required />
+              <div class="field-helper">Use '&amp;' between words to style the second half with Instrument Serif italic accent</div>
+            </div>
+
+            <div class="form-field">
+              <label class="field-label" for="field-hero-positioning">Short Positioning Statement</label>
+              <textarea id="field-hero-positioning" class="admin-textarea" rows="3" required></textarea>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-field">
+                <label class="field-label" for="field-hero-primary-cta-text">Primary CTA Text</label>
+                <input type="text" id="field-hero-primary-cta-text" class="admin-input" />
+              </div>
+              <div class="form-field">
+                <label class="field-label" for="field-hero-primary-cta-url">Primary CTA Link</label>
+                <input type="text" id="field-hero-primary-cta-url" class="admin-input" />
+              </div>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-field">
+                <label class="field-label" for="field-hero-secondary-cta-text">Secondary CTA Text</label>
+                <input type="text" id="field-hero-secondary-cta-text" class="admin-input" />
+              </div>
+              <div class="form-field">
+                <label class="field-label" for="field-hero-secondary-cta-url">Secondary CTA Link</label>
+                <input type="text" id="field-hero-secondary-cta-url" class="admin-input" />
+              </div>
+            </div>
+
+            <div class="form-field">
+              <label class="field-label" for="field-hero-availability">Availability Status Badge</label>
+              <input type="text" id="field-hero-availability" class="admin-input" />
+            </div>
+
+            <button type="submit" class="admin-btn admin-btn-primary">Save Hero Changes</button>
+          </form>
+        </div>
+
+        <!-- About Editorial Content Fields -->
+        <div class="admin-card">
+          <div class="card-title-bar">
+            <h3 class="card-title">About Narrative &amp; Philosophy</h3>
+          </div>
+
+          <form id="about-content-form">
+            <div class="form-field">
+              <label class="field-label" for="field-about-eyebrow">Section Eyebrow</label>
+              <input type="text" id="field-about-eyebrow" class="admin-input" />
+            </div>
+
+            <div class="form-field">
+              <label class="field-label" for="field-about-headline">Primary Statement / Headline</label>
+              <textarea id="field-about-headline" class="admin-textarea" rows="3" required></textarea>
+            </div>
+
+            <div class="form-field">
+              <label class="field-label" for="field-about-headline-accent">Word to Accent with Editorial Serif</label>
+              <input type="text" id="field-about-headline-accent" class="admin-input" placeholder="e.g. intersection" />
+            </div>
+
+            <div class="form-field">
+              <label class="field-label" for="field-about-p1">Bio Paragraph 1</label>
+              <textarea id="field-about-p1" class="admin-textarea" rows="4" required></textarea>
+            </div>
+
+            <div class="form-field">
+              <label class="field-label" for="field-about-p2">Bio Paragraph 2</label>
+              <textarea id="field-about-p2" class="admin-textarea" rows="4"></textarea>
+            </div>
+
+            <div class="form-field">
+              <label class="field-label" for="field-about-quote">Philosophy Quote</label>
+              <input type="text" id="field-about-quote" class="admin-input" />
+            </div>
+
+            <div class="form-field">
+              <label class="field-label" for="field-about-quote-accent">Word in Quote to Accent</label>
+              <input type="text" id="field-about-quote-accent" class="admin-input" placeholder="e.g. clarity of thought" />
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-field">
+                <label class="field-label" for="field-about-experience">Experience Years Badge</label>
+                <input type="text" id="field-about-experience" class="admin-input" placeholder="e.g. 10+ Years" />
+              </div>
+              <div class="form-field">
+                <label class="field-label" for="field-about-badge">Availability Badge</label>
+                <input type="text" id="field-about-badge" class="admin-input" placeholder="e.g. Open for Q3/Q4 Projects" />
+              </div>
+            </div>
+
+            <button type="submit" class="admin-btn admin-btn-primary">Save About Changes</button>
+          </form>
+        </div>
+
+        <!-- Contact & Social Details -->
+        <div class="admin-card">
+          <div class="card-title-bar">
+            <h3 class="card-title">Contact &amp; Location Details</h3>
+          </div>
+
+          <form id="contact-info-form">
+            <div class="form-grid-2">
+              <div class="form-field">
+                <label class="field-label" for="field-contact-heading">Contact Headline</label>
+                <input type="text" id="field-contact-heading" class="admin-input" required />
+              </div>
+              <div class="form-field">
+                <label class="field-label" for="field-contact-subheading">Subheading</label>
+                <input type="text" id="field-contact-subheading" class="admin-input" />
+              </div>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-field">
+                <label class="field-label" for="field-contact-email">Email Address</label>
+                <input type="email" id="field-contact-email" class="admin-input" required />
+              </div>
+              <div class="form-field">
+                <label class="field-label" for="field-contact-phone">Phone / WhatsApp</label>
+                <input type="text" id="field-contact-phone" class="admin-input" />
+              </div>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-field">
+                <label class="field-label" for="field-contact-location">Location / Timezone</label>
+                <input type="text" id="field-contact-location" class="admin-input" />
+              </div>
+              <div class="form-field">
+                <label class="field-label" for="field-contact-availability">Availability Note</label>
+                <input type="text" id="field-contact-availability" class="admin-input" />
+              </div>
+            </div>
+
+            <button type="submit" class="admin-btn admin-btn-primary">Save Contact Details</button>
+          </form>
+        </div>
+
+        <!-- Social Media Links -->
+        <div class="admin-card">
+          <div class="card-title-bar">
+            <div>
+              <h3 class="card-title">Social Media Links</h3>
+              <p style="font-size: 13px; color: var(--admin-text-secondary); margin-top: 4px;">
+                Platforms displayed in the footer (LinkedIn, X, GitHub, Behance, Dribbble, etc.).
+              </p>
+            </div>
+            <button type="button" class="admin-btn admin-btn-primary" id="btn-add-social">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Add Link
+            </button>
+          </div>
+
+          <div class="items-list" id="social-list-container">
+            <!-- Populated via admin.js -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= PANEL 8: MEDIA LIBRARY ================= -->
+      <section class="tab-panel" id="tab-media" style="display: none;">
+        <div class="admin-card">
+          <div class="card-title-bar">
+            <div>
+              <h3 class="card-title">Media Asset Library</h3>
+              <p style="font-size: 13px; color: var(--admin-text-secondary); margin-top: 4px;">
+                Upload, inspect, copy public URLs, and manage all images, videos, and PDFs.
+              </p>
+            </div>
+            <span class="status-pill active" id="media-count-badge">0 Files</span>
+          </div>
+
+          <!-- Upload Dropzone -->
+          <div class="gallery-batch-dropzone" id="media-library-dropzone" style="margin-bottom: 20px;">
+            <input type="file" id="media-library-file-input" multiple accept="image/*,video/*,application/pdf" style="display: none;" />
+            <div style="font-size: 28px; margin-bottom: 8px;">📁</div>
+            <div style="font-weight: 700; font-size: 14px;">Drop media files here or click to batch upload</div>
+            <div style="font-size: 12px; color: var(--admin-text-muted); margin-top: 4px;">Supports PNG, JPG, WEBP, SVG, MP4, WEBM, and PDF (Max 50MB per file)</div>
+            <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm" style="margin-top: 14px;" onclick="document.getElementById('media-library-file-input').click()">
+              Select Media Files
+            </button>
+          </div>
+
+          <!-- Media Filter Bar -->
+          <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+            <button class="filter-btn active" data-media-filter="all">All Media</button>
+            <button class="filter-btn" data-media-filter="image">Images</button>
+            <button class="filter-btn" data-media-filter="video">Videos</button>
+            <button class="filter-btn" data-media-filter="pdf">Documents (PDF)</button>
+          </div>
+
+          <!-- Media Grid -->
+          <div class="media-library-grid" id="media-library-grid">
+            <!-- Populated via admin.js -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= PANEL 9: IMPACT / STATISTICS ================= -->
+      <section class="tab-panel" id="tab-statistics" style="display: none;">
+        <div class="admin-card">
+          <div class="card-title-bar">
+            <div>
+              <h3 class="card-title">Impact Numbers &amp; Metrics</h3>
+              <p style="font-size: 13px; color: var(--admin-text-secondary); margin-top: 4px;">
+                Quantitative proof metrics displayed on the public impact section.
+              </p>
+            </div>
+            <button type="button" class="admin-btn admin-btn-primary" id="btn-add-stat">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Add Metric
+            </button>
+          </div>
+
+          <div class="items-list" id="stats-list-container">
+            <!-- Populated via admin.js -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= PANEL 10: INQUIRIES / MESSAGES ================= -->
+      <section class="tab-panel" id="tab-messages" style="display: none;">
+        <div class="admin-card">
+          <div class="card-title-bar">
+            <h3 class="card-title">Visitor Inquiries</h3>
+            <span class="status-pill active" id="messages-count-pill">0 Total</span>
+          </div>
+
+          <div class="items-list" id="messages-list-container">
+            <!-- Populated via admin.js -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= PANEL 11: SETTINGS & SECTIONS ================= -->
+      <section class="tab-panel" id="tab-settings" style="display: none;">
+        <!-- SEO & Global Site Settings -->
+        <div class="admin-card">
+          <div class="card-title-bar">
+            <h3 class="card-title">Global Site Identity &amp; SEO Meta</h3>
+          </div>
+
+          <form id="settings-form">
+            <div class="form-field">
+              <label class="field-label" for="field-settings-title">Site Title</label>
+              <input type="text" id="field-settings-title" class="admin-input" required />
+            </div>
+
+            <div class="form-field">
+              <label class="field-label" for="field-settings-desc">Meta Description</label>
+              <textarea id="field-settings-desc" class="admin-textarea" rows="2"></textarea>
+            </div>
+
+            <div class="form-field">
+              <label class="field-label" for="field-settings-keywords">Meta Keywords</label>
+              <input type="text" id="field-settings-keywords" class="admin-input" />
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-field">
+                <label class="field-label" for="field-settings-logo">Logo Text / URL</label>
+                <input type="text" id="field-settings-logo" class="admin-input" placeholder="MOFIDUL" />
+              </div>
+              <div class="form-field">
+                <label class="field-label" for="field-settings-og-image">Default Social Share Image (OG Image)</label>
+                <input type="text" id="field-settings-og-image" class="admin-input" placeholder="/uploads/og-image.jpg" />
+              </div>
+            </div>
+
+            <button type="submit" class="admin-btn admin-btn-primary" style="margin-top: 14px;">Save Identity &amp; Meta</button>
+          </form>
+        </div>
+
+        <!-- Homepage Section Visibility & Titles Manager -->
+        <div class="admin-card">
+          <div class="card-title-bar">
+            <div>
+              <h3 class="card-title">Homepage Section Controls</h3>
+              <p style="font-size: 13px; color: var(--admin-text-secondary); margin-top: 4px;">
+                Enable or disable homepage sections, customize titles and eyebrows, and adjust ordering.
+              </p>
+            </div>
+          </div>
+
+          <div style="overflow-x: auto;">
+            <table class="settings-admin-table" id="sections-admin-table">
+              <thead>
+                <tr>
+                  <th style="width: 140px;">Section Key</th>
+                  <th>Title Override</th>
+                  <th>Eyebrow</th>
+                  <th style="width: 100px;">Status</th>
+                  <th style="width: 110px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="sections-table-body">
+                <!-- Populated via admin.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Navigation Links Manager -->
+        <div class="admin-card">
+          <div class="card-title-bar">
+            <div>
+              <h3 class="card-title">Dynamic Navigation Links</h3>
+              <p style="font-size: 13px; color: var(--admin-text-secondary); margin-top: 4px;">
+                Manage header and mobile menu navigation items without changing code.
+              </p>
+            </div>
+            <button type="button" class="admin-btn admin-btn-primary admin-btn-sm" id="btn-add-nav-link">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Add Link
+            </button>
+          </div>
+
+          <div style="overflow-x: auto;">
+            <table class="settings-admin-table" id="nav-admin-table">
+              <thead>
+                <tr>
+                  <th style="width: 80px;">Order</th>
+                  <th>Label</th>
+                  <th>URL Target</th>
+                  <th style="width: 100px;">Status</th>
+                  <th style="width: 140px; text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="nav-table-body">
+                <!-- Populated via admin.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Admin Security -->
+        <div class="admin-card">
+          <div class="card-title-bar">
+            <h3 class="card-title">Admin Account &amp; Password</h3>
+          </div>
+
+          <form id="profile-security-form">
+            <div class="form-grid-2">
+              <div class="form-field">
+                <label class="field-label" for="field-admin-username">Admin Username</label>
+                <input type="text" id="field-admin-username" class="admin-input" required />
+              </div>
+              <div class="form-field">
+                <label class="field-label" for="field-admin-email">Admin Email</label>
+                <input type="email" id="field-admin-email" class="admin-input" required />
+              </div>
+            </div>
+
+            <div class="form-field" style="margin-top: 16px;">
+              <label class="field-label" for="field-admin-current-pass">Current Password (Required only to change password)</label>
+              <input type="password" id="field-admin-current-pass" class="admin-input" />
+            </div>
+
+            <div class="form-field">
+              <label class="field-label" for="field-admin-new-pass">New Password (Leave blank to keep current)</label>
+              <input type="password" id="field-admin-new-pass" class="admin-input" placeholder="At least 8 characters" />
+            </div>
+
+            <button type="submit" class="admin-btn admin-btn-secondary">Update Security Credentials</button>
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- 1. PROJECT MANAGEMENT & CASE STUDY MODAL -->
+  <div class="admin-modal" id="modal-project">
+    <div class="modal-dialog modal-dialog-lg">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-project-title">Project Case Study Editor</h3>
+        <button class="modal-close-btn" onclick="closeModal('modal-project')">&times;</button>
+      </div>
+      <form id="project-form">
+        <input type="hidden" id="project-form-id" />
+        <div class="modal-body">
+          <!-- Section 1: Core Metadata -->
+          <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--admin-accent); margin-bottom: 14px;">
+            1. Core Case Study Metadata
+          </div>
+          
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="field-label">Project Title *</label>
+              <input type="text" id="p-title" class="admin-input" placeholder="e.g. Apex Studio Identity" required />
+            </div>
+            <div class="form-field">
+              <label class="field-label">URL Slug</label>
+              <input type="text" id="p-slug" class="admin-input" placeholder="apex-studio-identity" />
+              <div class="field-helper">Used for clean URLs like /work/apex-studio-identity</div>
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="field-label">Category / Discipline *</label>
+              <input type="text" id="p-category" class="admin-input" placeholder="e.g. Brand Identity, UI/UX" required />
+            </div>
+            <div class="form-field">
+              <label class="field-label">Client Name</label>
+              <input type="text" id="p-client" class="admin-input" placeholder="e.g. Apex Collective" />
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="field-label">Industry / Sector</label>
+              <input type="text" id="p-industry" class="admin-input" placeholder="e.g. Architecture, Fintech, Fashion" />
+            </div>
+            <div class="form-field">
+              <label class="field-label">Year / Date</label>
+              <input type="text" id="p-year" class="admin-input" placeholder="2025" />
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="field-label">Project Duration</label>
+              <input type="text" id="p-duration" class="admin-input" placeholder="e.g. 3 Months" />
+            </div>
+            <div class="form-field">
+              <label class="field-label">Your Role</label>
+              <input type="text" id="p-role" class="admin-input" placeholder="e.g. Lead Brand Designer &amp; Art Director" />
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="field-label">Team &amp; Collaborators</label>
+              <input type="text" id="p-team" class="admin-input" placeholder="e.g. Strategy: Sarah L., 3D: Alex M." />
+            </div>
+            <div class="form-field">
+              <label class="field-label">Services Delivered</label>
+              <input type="text" id="p-services-used" class="admin-input" placeholder="e.g. Creative Direction, Brand Identity, Motion" />
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="field-label">Technologies &amp; Tools</label>
+              <input type="text" id="p-technologies" class="admin-input" placeholder="e.g. Figma, Blender, WebGL, Next.js" />
+            </div>
+            <div class="form-field">
+              <label class="field-label">Specific Skills Applied</label>
+              <input type="text" id="p-skills" class="admin-input" placeholder="e.g. Design Systems, Typography, 3D Art" />
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="field-label">External Live URL</label>
+              <input type="url" id="p-url" class="admin-input" placeholder="https://example.com" />
+            </div>
+            <div class="form-field">
+              <label class="field-label">Video Embed / Stream URL</label>
+              <input type="url" id="p-video-url" class="admin-input" placeholder="YouTube, Vimeo, or MP4 URL" />
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label class="field-label">Project Tags</label>
+            <input type="text" id="p-tags" class="admin-input" placeholder="e.g. Luxury, Dark Mode, Minimal, Typography" />
+          </div>
+
+          <!-- Section 2: Narrative & Deep Story -->
+          <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--admin-accent); margin: 24px 0 14px; padding-top: 18px; border-top: 1px solid var(--admin-glass-border);">
+            2. Case Study Narrative &amp; Strategy
+          </div>
+
+          <div class="form-field">
+            <label class="field-label">Short Description * (Cards &amp; Previews)</label>
+            <textarea id="p-short-desc" class="admin-textarea" rows="2" placeholder="Punchy summary sentence" required></textarea>
+          </div>
+
+          <div class="form-field">
+            <label class="field-label">Full Narrative Description</label>
+            <textarea id="p-full-desc" class="admin-textarea" rows="4" placeholder="Detailed background story and creative direction"></textarea>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="field-label">The Challenge</label>
+              <textarea id="p-challenge" class="admin-textarea" rows="3" placeholder="What core problem did this project address?"></textarea>
+            </div>
+            <div class="form-field">
+              <label class="field-label">The Objective</label>
+              <textarea id="p-objective" class="admin-textarea" rows="3" placeholder="Strategic goals and intended targets"></textarea>
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="field-label">Creative Strategy</label>
+              <textarea id="p-strategy" class="admin-textarea" rows="3" placeholder="Design thinking and conceptual framing"></textarea>
+            </div>
+            <div class="form-field">
+              <label class="field-label">Process &amp; Methodology</label>
+              <textarea id="p-process" class="admin-textarea" rows="3" placeholder="Research, exploration, rapid prototyping, production"></textarea>
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="field-label">The Solution</label>
+              <textarea id="p-solution" class="admin-textarea" rows="3" placeholder="How the final visual and technical system was executed"></textarea>
+            </div>
+            <div class="form-field">
+              <label class="field-label">Results &amp; Measurable Impact</label>
+              <textarea id="p-results" class="admin-textarea" rows="3" placeholder="Commercial adoption, user metrics, launch outcomes"></textarea>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label class="field-label">Key Highlights (One per line or comma-separated)</label>
+            <textarea id="p-highlights" class="admin-textarea" rows="2" placeholder="e.g. Featured on Awwwards, 140% Conversion Lift"></textarea>
+          </div>
+
+          <!-- Section 3: Media & Imagery -->
+          <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--admin-accent); margin: 24px 0 14px; padding-top: 18px; border-top: 1px solid var(--admin-glass-border);">
+            3. Project Imagery &amp; Multi-Image Gallery
+          </div>
+
+          <div class="form-field">
+            <label class="field-label">Cover / Featured Image</label>
+            <div class="image-upload-zone" id="project-image-dropzone">
+              <input type="file" id="project-file-input" accept="image/*" style="display: none;" />
+              <input type="hidden" id="p-cover-image" />
+              <div id="project-upload-prompt">
+                <div style="font-weight: 600; font-size: 13.5px;">Click to select or upload project cover image</div>
+                <div style="font-size: 11.5px; color: var(--admin-text-muted);">Leave empty for clean typographic cover</div>
+              </div>
+              <div id="project-image-preview-wrap" style="display: none; margin-top: 10px;">
+                <img id="project-image-preview" src="" alt="Cover preview" style="max-height: 120px; border-radius: 6px;" />
+                <div style="margin-top: 8px;">
+                  <button type="button" class="admin-btn admin-btn-danger admin-btn-sm" id="btn-remove-project-image">Remove Cover</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Multi-Image Gallery Manager -->
+          <div id="project-gallery-manager-wrap">
+            <div class="gallery-manager-header">
+              <div>
+                <div style="font-size: 14px; font-weight: 700; color: var(--admin-text-primary);">Multiple Image Gallery</div>
+                <div style="font-size: 12px; color: var(--admin-text-muted);">Upload 1 to 20+ images, reorder, add captions, and set cover</div>
+              </div>
+              <span id="p-gallery-count-badge" class="sidebar-badge">0 Images</span>
+            </div>
+
+            <div class="gallery-batch-dropzone" id="gallery-dropzone">
+              <input type="file" id="gallery-batch-input" multiple accept="image/*" style="display: none;" />
+              <div style="font-size: 24px; margin-bottom: 6px;">📸</div>
+              <div style="font-weight: 600; font-size: 13.5px;">Drop multiple images here or click to batch upload</div>
+              <div style="font-size: 11.5px; color: var(--admin-text-muted); margin-top: 4px;">PNG, JPEG, WEBP, AVIF, SVG (Up to 20MB each)</div>
+              <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm" style="margin-top: 12px;" onclick="document.getElementById('gallery-batch-input').click()">Choose Image Files</button>
+            </div>
+
+            <div id="gallery-unsaved-notice" style="display: none; padding: 14px; background: rgba(124, 92, 255, 0.08); border: 1px dashed var(--admin-accent); border-radius: 8px; font-size: 12.5px; color: var(--admin-text-secondary); text-align: center; margin-bottom: 14px;">
+              💡 Save this project first to enable instant multi-image gallery batch upload and reordering.
+            </div>
+
+            <div class="gallery-items-grid" id="project-gallery-grid"></div>
+          </div>
+
+          <!-- Section 4: Publishing & Status -->
+          <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--admin-accent); margin: 24px 0 14px; padding-top: 18px; border-top: 1px solid var(--admin-glass-border);">
+            4. Publication Status &amp; Visibility
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="field-label">Publication Status</label>
+              <select id="p-status" class="admin-input">
+                <option value="published">Published (Visible Publicly)</option>
+                <option value="draft">Draft (Dashboard Only)</option>
+                <option value="hidden">Hidden (Archived)</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label class="field-label">Sort Order</label>
+              <input type="number" id="p-sort-order" class="admin-input" placeholder="1" min="0" />
+            </div>
+          </div>
+
+          <div class="toggle-row" style="padding: 10px 0;">
+            <div>
+              <div style="font-weight: 600; font-size: 13.5px;">Featured Case Study</div>
+              <div style="font-size: 11.5px; color: var(--admin-text-muted);">Mark as prominent work with badge</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="p-featured" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="admin-btn admin-btn-secondary" onclick="closeModal('modal-project')">Cancel</button>
+          <button type="submit" class="admin-btn admin-btn-primary" id="btn-save-project">Save Project</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. SERVICE MODAL -->
+  <div class="admin-modal" id="modal-service">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-service-title">Add Service</h3>
+        <button class="modal-close-btn" onclick="closeModal('modal-service')">&times;</button>
+      </div>
+      <form id="service-form">
+        <input type="hidden" id="service-form-id" />
+        <div class="modal-body">
+          <div class="form-field">
+            <label class="field-label">Service Title *</label>
+            <input type="text" id="s-title" class="admin-input" placeholder="e.g. Brand Identity &amp; Systems" required />
+          </div>
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="field-label">Category</label>
+              <input type="text" id="s-category" class="admin-input" placeholder="e.g. Design &amp; Direction" />
+            </div>
+            <div class="form-field">
+              <label class="field-label">Icon Name</label>
+              <input type="text" id="s-icon" class="admin-input" placeholder="sparkles, layers, compass" />
+            </div>
+          </div>
+          <div class="form-field">
+            <label class="field-label">Short Description *</label>
+            <textarea id="s-short-desc" class="admin-textarea" rows="2" required></textarea>
+          </div>
+          <div class="form-field">
+            <label class="field-label">Detailed Description</label>
+            <textarea id="s-full-desc" class="admin-textarea" rows="3"></textarea>
+          </div>
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="field-label">Deliverables (Comma or newline)</label>
+              <textarea id="s-deliverables" class="admin-textarea" rows="2" placeholder="e.g. Visual Guidelines, Logo Assets, Design System"></textarea>
+            </div>
+            <div class="form-field">
+              <label class="field-label">Outcomes &amp; Benefits</label>
+              <textarea id="s-outcomes" class="admin-textarea" rows="2" placeholder="e.g. Scalable consistency, investor confidence"></textarea>
+            </div>
+          </div>
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="field-label">Status</label>
+              <select id="s-status" class="admin-input">
+                <option value="published">Published</option>
+                <option value="draft">Draft</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label class="field-label">Sort Order</label>
+              <input type="number" id="s-sort-order" class="admin-input" placeholder="1" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="admin-btn admin-btn-secondary" onclick="closeModal('modal-service')">Cancel</button>
+          <button type="submit" class="admin-btn admin-btn-primary">Save Service</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. SKILL MODAL -->
+  <div class="admin-modal" id="modal-skill">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-skill-title">Add Skill</h3>
+        <button class="modal-close-btn" onclick="closeModal('modal-skill')">&times;</button>
+      </div>
+      <form id="skill-form">
+        <input type="hidden" id="skill-form-id" />
+        <div class="modal-body">
+          <div class="form-field">
+            <label class="field-label">Skill Name *</label>
+            <input type="text" id="sk-name" class="admin-input" placeholder="e.g. Design Systems" required />
+          </div>
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="field-label">Category *</label>
+              <input type="text" id="sk-category" class="admin-input" placeholder="Design Systems, Creative Tech, Motion &amp; 3D" required />
+            </div>
+            <div class="form-field">
+              <label class="field-label">Proficiency Level</label>
+              <input type="text" id="sk-proficiency" class="admin-input" placeholder="e.g. 95%" />
+            </div>
+          </div>
+          <div class="form-field">
+            <label class="field-label">Description / Summary</label>
+            <textarea id="sk-desc" class="admin-textarea" rows="2" placeholder="Brief note on how this skill is applied"></textarea>
+          </div>
+          <div class="form-field">
+            <label class="field-label">Related Services or Tools</label>
+            <input type="text" id="sk-related" class="admin-input" placeholder="e.g. Figma, Tokens, Multi-Brand" />
+          </div>
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="field-label">Status</label>
+              <select id="sk-status" class="admin-input">
+                <option value="published">Published</option>
+                <option value="draft">Draft</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label class="field-label">Sort Order</label>
+              <input type="number" id="sk-sort-order" class="admin-input" placeholder="1" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="admin-btn admin-btn-secondary" onclick="closeModal('modal-skill')">Cancel</button>
+          <button type="submit" class="admin-btn admin-btn-primary">Save Skill</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. EXPERIENCE MODAL -->
+  <div class="admin-modal" id="modal-experience">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-experience-title">Add Career Milestone</h3>
+        <button class="modal-close-btn" onclick="closeModal('modal-experience')">&times;</button>
+      </div>
+      <form id="experience-form">
+        <input type="hidden" id="experience-form-id" />
+        <div class="modal-body">
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="field-label">Company / Organization *</label>
+              <input type="text" id="ex-company" class="admin-input" placeholder="e.g. Apex Creative Group" required />
+            </div>
+            <div class="form-field">
+              <label class="field-label">Role Title *</label>
+              <input type="text" id="ex-role" class="admin-input" placeholder="e.g. Design Director" required />
+            </div>
+          </div>
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="field-label">Start Date / Year</label>
+              <input type="text" id="ex-start-date" class="admin-input" placeholder="e.g. 2022" />
+            </div>
+            <div class="form-field">
+              <label class="field-label">End Date / Year (Leave blank if current)</label>
+              <input type="text" id="ex-end-date" class="admin-input" placeholder="e.g. 2024" />
+            </div>
+          </div>
+          <div class="toggle-row" style="margin-bottom: 14px;">
+            <div><div style="font-weight: 600; font-size: 13px;">Currently In This Position</div></div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="ex-is-current" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="form-field">
+            <label class="field-label">Location</label>
+            <input type="text" id="ex-location" class="admin-input" placeholder="e.g. New York / Remote" />
+          </div>
+          <div class="form-field">
+            <label class="field-label">Overview Description</label>
+            <textarea id="ex-desc" class="admin-textarea" rows="2" placeholder="High-level narrative of leadership and impact"></textarea>
+          </div>
+          <div class="form-field">
+            <label class="field-label">Key Responsibilities (One per line)</label>
+            <textarea id="ex-responsibilities" class="admin-textarea" rows="3" placeholder="Led team of 8 brand designers...&#10;Defined design tokens and motion language..."></textarea>
+          </div>
+          <div class="form-field">
+            <label class="field-label">Technologies &amp; Tools Used</label>
+            <input type="text" id="ex-technologies" class="admin-input" placeholder="e.g. Figma, WebGL, Brand Strategy, AI Workflows" />
+          </div>
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="field-label">Status</label>
+              <select id="ex-status" class="admin-input">
+                <option value="published">Published</option>
+                <option value="draft">Draft</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label class="field-label">Sort Order</label>
+              <input type="number" id="ex-sort-order" class="admin-input" placeholder="1" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="admin-btn admin-btn-secondary" onclick="closeModal('modal-experience')">Cancel</button>
+          <button type="submit" class="admin-btn admin-btn-primary">Save Experience</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 5. STATISTIC MODAL -->
+  <div class="admin-modal" id="modal-stat">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-stat-title">Add Metric</h3>
+        <button class="modal-close-btn" onclick="closeModal('modal-stat')">&times;</button>
+      </div>
+      <form id="stat-form">
+        <input type="hidden" id="stat-form-id" />
+        <div class="modal-body">
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="field-label">Metric Value *</label>
+              <input type="text" id="stat-value" class="admin-input" placeholder="e.g. 10" required />
+            </div>
+            <div class="form-field">
+              <label class="field-label">Suffix</label>
+              <input type="text" id="stat-suffix" class="admin-input" placeholder="e.g. + or %" />
+            </div>
+          </div>
+          <div class="form-field">
+            <label class="field-label">Metric Label *</label>
+            <input type="text" id="stat-label" class="admin-input" placeholder="e.g. Years of Experience" required />
+          </div>
+          <div class="form-field">
+            <label class="field-label">Short Description</label>
+            <input type="text" id="stat-desc" class="admin-input" placeholder="e.g. In brand strategy &amp; design" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="admin-btn admin-btn-secondary" onclick="closeModal('modal-stat')">Cancel</button>
+          <button type="submit" class="admin-btn admin-btn-primary">Save Metric</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 6. TESTIMONIAL MODAL -->
+  <div class="admin-modal" id="modal-testimonial">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-testimonial-title">Add Testimonial</h3>
+        <button class="modal-close-btn" onclick="closeModal('modal-testimonial')">&times;</button>
+      </div>
+      <form id="testimonial-form">
+        <input type="hidden" id="testimonial-form-id" />
+        <div class="modal-body">
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="field-label">Client Name *</label>
+              <input type="text" id="t-name" class="admin-input" required />
+            </div>
+            <div class="form-field">
+              <label class="field-label">Role / Title</label>
+              <input type="text" id="t-role" class="admin-input" placeholder="e.g. Founder &amp; CEO" />
+            </div>
+          </div>
+          <div class="form-field">
+            <label class="field-label">Company / Organization</label>
+            <input type="text" id="t-company" class="admin-input" placeholder="e.g. Apex Labs" />
+          </div>
+          <div class="form-field">
+            <label class="field-label">Testimonial Text *</label>
+            <textarea id="t-text" class="admin-textarea" rows="4" required></textarea>
+          </div>
+
+          <div class="form-field">
+            <label class="field-label">Client Avatar Image (Optional)</label>
+            <div class="image-upload-zone" id="testimonial-avatar-dropzone">
+              <input type="file" id="testimonial-file-input" accept="image/*" style="display: none;" />
+              <input type="hidden" id="t-avatar" />
+              <div id="t-upload-prompt">
+                <div style="font-weight: 600; font-size: 13.5px;">Click to upload client avatar</div>
+              </div>
+              <div id="t-avatar-preview-wrap" style="display: none; margin-top: 10px;">
+                <img id="t-avatar-preview" src="" alt="Avatar preview" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;" />
+                <button type="button" class="admin-btn admin-btn-danger admin-btn-sm" id="btn-remove-t-avatar" style="margin-top: 8px;">Remove Avatar</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="field-label">Status</label>
+              <select id="t-status" class="admin-input">
+                <option value="published">Published</option>
+                <option value="draft">Draft</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label class="field-label">Sort Order</label>
+              <input type="number" id="t-sort-order" class="admin-input" placeholder="1" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="admin-btn admin-btn-secondary" onclick="closeModal('modal-testimonial')">Cancel</button>
+          <button type="submit" class="admin-btn admin-btn-primary">Save Testimonial</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 7. NAVIGATION LINK MODAL -->
+  <div class="admin-modal" id="modal-nav-link">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-nav-title">Add Navigation Link</h3>
+        <button class="modal-close-btn" onclick="closeModal('modal-nav-link')">&times;</button>
+      </div>
+      <form id="nav-link-form">
+        <input type="hidden" id="nav-link-form-id" />
+        <div class="modal-body">
+          <div class="form-field">
+            <label class="field-label">Link Label *</label>
+            <input type="text" id="nav-label" class="admin-input" placeholder="e.g. Work, Services, Skills, About" required />
+          </div>
+          <div class="form-field">
+            <label class="field-label">URL Target *</label>
+            <input type="text" id="nav-url" class="admin-input" placeholder="e.g. #work, #services, #skills, /work/brand-identity" required />
+          </div>
+          <div class="form-field">
+            <label class="field-label">Sort Order</label>
+            <input type="number" id="nav-sort-order" class="admin-input" placeholder="1" />
+          </div>
+          <div class="toggle-row">
+            <div><div style="font-weight: 600; font-size: 13px;">Active in Navigation</div></div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="nav-is-active" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="admin-btn admin-btn-secondary" onclick="closeModal('modal-nav-link')">Cancel</button>
+          <button type="submit" class="admin-btn admin-btn-primary">Save Link</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 8. SOCIAL LINK MODAL -->
+  <div class="admin-modal" id="modal-social">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-social-title">Add Social Link</h3>
+        <button class="modal-close-btn" onclick="closeModal('modal-social')">&times;</button>
+      </div>
+      <form id="social-form">
+        <input type="hidden" id="social-form-id" />
+        <div class="modal-body">
+          <div class="form-field">
+            <label class="field-label">Platform Name *</label>
+            <input type="text" id="soc-platform" class="admin-input" placeholder="e.g. LinkedIn, Behance, Dribbble, GitHub" required />
+          </div>
+          <div class="form-field">
+            <label class="field-label">Display Label</label>
+            <input type="text" id="soc-label" class="admin-input" placeholder="e.g. LinkedIn" />
+          </div>
+          <div class="form-field">
+            <label class="field-label">Profile URL *</label>
+            <input type="url" id="soc-url" class="admin-input" placeholder="https://..." required />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="admin-btn admin-btn-secondary" onclick="closeModal('modal-social')">Cancel</button>
+          <button type="submit" class="admin-btn admin-btn-primary">Save Link</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notifications Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Admin Application Script -->
+  <script src="/admin/admin.js"></script>
+</body>
+</html>
