@@ -102,8 +102,15 @@ const server = app.listen(PORT, () => {
 });
 
 // Handle termination signals
-process.on('SIGINT', () => {
+const handleShutdown = () => {
+  if (typeof db.checkpointDb === 'function') {
+    db.checkpointDb();
+  }
   server.close(() => {
     process.exit(0);
   });
-});
+};
+
+process.on('SIGINT', handleShutdown);
+process.on('SIGTERM', handleShutdown);
+

@@ -358,7 +358,27 @@ router.get('/api/admin/hero', requireAuth, (req, res) => {
 
 router.put('/api/admin/hero', requireAuth, (req, res) => {
   try {
-    const {
+    const existing = db.prepare('SELECT * FROM hero_content WHERE id = 1').get() || {};
+    const greeting = req.body.greeting !== undefined ? req.body.greeting : (existing.greeting || 'HELLO, I AM');
+    const name = req.body.name !== undefined ? req.body.name : (existing.name || 'Mofidul');
+    const role_title = req.body.role_title !== undefined ? req.body.role_title : (existing.role_title || '');
+    const positioning_statement = req.body.positioning_statement !== undefined ? req.body.positioning_statement : (existing.positioning_statement || '');
+    const primary_cta_text = req.body.primary_cta_text !== undefined ? req.body.primary_cta_text : (existing.primary_cta_text || 'View Selected Works');
+    const primary_cta_url = req.body.primary_cta_url !== undefined ? req.body.primary_cta_url : (existing.primary_cta_url || '#work');
+    const secondary_cta_text = req.body.secondary_cta_text !== undefined ? req.body.secondary_cta_text : (existing.secondary_cta_text || 'Get in Touch');
+    const secondary_cta_url = req.body.secondary_cta_url !== undefined ? req.body.secondary_cta_url : (existing.secondary_cta_url || '#contact');
+    const profile_image_url = req.body.profile_image_url !== undefined ? req.body.profile_image_url : (existing.profile_image_url || '');
+    const profile_image_alt = req.body.profile_image_alt !== undefined ? req.body.profile_image_alt : (existing.profile_image_alt || 'Mofidul Profile Photo');
+    const availability_status = req.body.availability_status !== undefined ? req.body.availability_status : (existing.availability_status || '');
+
+    db.prepare(`
+      UPDATE hero_content
+      SET greeting = ?, name = ?, role_title = ?, positioning_statement = ?,
+          primary_cta_text = ?, primary_cta_url = ?, secondary_cta_text = ?, secondary_cta_url = ?,
+          profile_image_url = ?, profile_image_alt = ?, availability_status = ?,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = 1
+    `).run(
       greeting,
       name,
       role_title,
@@ -370,30 +390,10 @@ router.put('/api/admin/hero', requireAuth, (req, res) => {
       profile_image_url,
       profile_image_alt,
       availability_status
-    } = req.body;
-
-    db.prepare(`
-      UPDATE hero_content
-      SET greeting = ?, name = ?, role_title = ?, positioning_statement = ?,
-          primary_cta_text = ?, primary_cta_url = ?, secondary_cta_text = ?, secondary_cta_url = ?,
-          profile_image_url = ?, profile_image_alt = ?, availability_status = ?,
-          updated_at = CURRENT_TIMESTAMP
-      WHERE id = 1
-    `).run(
-      greeting || 'HELLO, I AM',
-      name || 'Mofidul',
-      role_title || '',
-      positioning_statement || '',
-      primary_cta_text || 'View Selected Works',
-      primary_cta_url || '#work',
-      secondary_cta_text || 'Get in Touch',
-      secondary_cta_url || '#contact',
-      profile_image_url !== undefined ? profile_image_url : '',
-      profile_image_alt || 'Mofidul Profile Photo',
-      availability_status || ''
     );
 
-    res.json({ success: true, message: 'Hero section saved successfully' });
+    const updated = db.prepare('SELECT * FROM hero_content WHERE id = 1').get();
+    res.json({ success: true, message: 'Hero section saved successfully', data: updated });
   } catch (err) {
     console.error('Hero update error:', err);
     res.status(500).json({ error: 'Failed to update hero content' });
@@ -411,17 +411,16 @@ router.get('/api/admin/about', requireAuth, (req, res) => {
 
 router.put('/api/admin/about', requireAuth, (req, res) => {
   try {
-    const {
-      eyebrow,
-      headline,
-      headline_accent,
-      bio_paragraph_1,
-      bio_paragraph_2,
-      quote,
-      quote_accent,
-      experience_years,
-      availability_badge
-    } = req.body;
+    const existing = db.prepare('SELECT * FROM about_content WHERE id = 1').get() || {};
+    const eyebrow = req.body.eyebrow !== undefined ? req.body.eyebrow : (existing.eyebrow || 'ABOUT MOFIDUL');
+    const headline = req.body.headline !== undefined ? req.body.headline : (existing.headline || '');
+    const headline_accent = req.body.headline_accent !== undefined ? req.body.headline_accent : (existing.headline_accent || '');
+    const bio_paragraph_1 = req.body.bio_paragraph_1 !== undefined ? req.body.bio_paragraph_1 : (existing.bio_paragraph_1 || '');
+    const bio_paragraph_2 = req.body.bio_paragraph_2 !== undefined ? req.body.bio_paragraph_2 : (existing.bio_paragraph_2 || '');
+    const quote = req.body.quote !== undefined ? req.body.quote : (existing.quote || '');
+    const quote_accent = req.body.quote_accent !== undefined ? req.body.quote_accent : (existing.quote_accent || '');
+    const experience_years = req.body.experience_years !== undefined ? req.body.experience_years : (existing.experience_years || '');
+    const availability_badge = req.body.availability_badge !== undefined ? req.body.availability_badge : (existing.availability_badge || '');
 
     db.prepare(`
       UPDATE about_content
@@ -431,23 +430,25 @@ router.put('/api/admin/about', requireAuth, (req, res) => {
           updated_at = CURRENT_TIMESTAMP
       WHERE id = 1
     `).run(
-      eyebrow || 'ABOUT MOFIDUL',
-      headline || '',
-      headline_accent || '',
-      bio_paragraph_1 || '',
-      bio_paragraph_2 || '',
-      quote || '',
-      quote_accent || '',
-      experience_years || '',
-      availability_badge || ''
+      eyebrow,
+      headline,
+      headline_accent,
+      bio_paragraph_1,
+      bio_paragraph_2,
+      quote,
+      quote_accent,
+      experience_years,
+      availability_badge
     );
 
-    res.json({ success: true, message: 'About section saved successfully' });
+    const updated = db.prepare('SELECT * FROM about_content WHERE id = 1').get();
+    res.json({ success: true, message: 'About section saved successfully', data: updated });
   } catch (err) {
     console.error('About update error:', err);
     res.status(500).json({ error: 'Failed to update about content' });
   }
 });
+
 
 // ==========================================
 // 5. ADMIN SERVICES CRUD
@@ -907,7 +908,14 @@ router.put('/api/admin/projects/:id', requireAuth, (req, res) => {
       id
     );
 
-    res.json({ success: true, message: 'Project updated successfully' });
+    const updated = db.prepare('SELECT * FROM projects WHERE id = ?').get(id);
+
+    if (updated) {
+      updated.gallery = db.prepare('SELECT * FROM project_images WHERE project_id = ? ORDER BY sort_order ASC, id ASC').all(id);
+    }
+
+    res.json({ success: true, message: 'Project updated successfully', data: updated });
+
   } catch (err) {
     console.error('Update project error:', err);
     res.status(500).json({ error: 'Failed to update project' });
@@ -1365,30 +1373,44 @@ router.post('/api/admin/testimonials', requireAuth, (req, res) => {
 router.put('/api/admin/testimonials/:id', requireAuth, (req, res) => {
   try {
     const id = Number(req.params.id);
-    const { client_name, client_role, company, testimonial_text, avatar_url, rating, sort_order, is_active } = req.body;
+    const existing = db.prepare('SELECT * FROM testimonials WHERE id = ?').get(id);
+    if (!existing) return res.status(404).json({ error: 'Testimonial not found' });
+
+    const client_name = req.body.client_name !== undefined ? req.body.client_name : existing.client_name;
+    const client_role = req.body.client_role !== undefined ? req.body.client_role : (existing.client_role || '');
+    const company = req.body.company !== undefined ? req.body.company : (existing.company || '');
+    const testimonial_text = req.body.testimonial_text !== undefined ? req.body.testimonial_text : existing.testimonial_text;
+    const avatar_url = req.body.avatar_url !== undefined ? req.body.avatar_url : (existing.avatar_url || '');
+    const rating = req.body.rating !== undefined ? Number(req.body.rating) : (existing.rating || 5);
+    const sort_order = req.body.sort_order !== undefined ? Number(req.body.sort_order) : existing.sort_order;
+    const is_active = req.body.is_active !== undefined ? (req.body.is_active ? 1 : 0) : existing.is_active;
+    const status = req.body.status !== undefined ? req.body.status : (existing.status || 'published');
 
     db.prepare(`
       UPDATE testimonials
       SET client_name = ?, client_role = ?, company = ?, testimonial_text = ?,
-          avatar_url = ?, rating = ?, sort_order = ?, is_active = ?
+          avatar_url = ?, rating = ?, sort_order = ?, is_active = ?, status = ?
       WHERE id = ?
     `).run(
       client_name,
-      client_role || '',
-      company || '',
+      client_role,
+      company,
       testimonial_text,
-      avatar_url !== undefined ? avatar_url : '',
-      Number(rating) || 5,
-      Number(sort_order) || 0,
-      is_active !== undefined ? (is_active ? 1 : 0) : 1,
+      avatar_url,
+      rating,
+      sort_order,
+      is_active,
+      status,
       id
     );
 
-    res.json({ success: true, message: 'Testimonial updated' });
+    const updated = db.prepare('SELECT * FROM testimonials WHERE id = ?').get(id);
+    res.json({ success: true, message: 'Testimonial updated', data: updated });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update testimonial' });
   }
 });
+
 
 router.delete('/api/admin/testimonials/:id', requireAuth, (req, res) => {
   try {
@@ -1837,7 +1859,14 @@ router.get('/api/admin/contact', requireAuth, (req, res) => {
 
 router.put('/api/admin/contact', requireAuth, (req, res) => {
   try {
-    const { heading, subheading, email, phone, location, availability_text, response_time } = req.body;
+    const existing = db.prepare('SELECT * FROM contact_info WHERE id = 1').get() || {};
+    const heading = req.body.heading !== undefined ? req.body.heading : (existing.heading || "Let's create something extraordinary.");
+    const subheading = req.body.subheading !== undefined ? req.body.subheading : (existing.subheading || '');
+    const email = req.body.email !== undefined ? req.body.email : (existing.email || '');
+    const phone = req.body.phone !== undefined ? req.body.phone : (existing.phone || '');
+    const location = req.body.location !== undefined ? req.body.location : (existing.location || '');
+    const availability_text = req.body.availability_text !== undefined ? req.body.availability_text : (existing.availability_text || '');
+    const response_time = req.body.response_time !== undefined ? req.body.response_time : (existing.response_time || '');
 
     db.prepare(`
       UPDATE contact_info
@@ -1846,20 +1875,22 @@ router.put('/api/admin/contact', requireAuth, (req, res) => {
           updated_at = CURRENT_TIMESTAMP
       WHERE id = 1
     `).run(
-      heading || "Let's create something extraordinary.",
-      subheading || '',
-      email || '',
-      phone || '',
-      location || '',
-      availability_text || '',
-      response_time || ''
+      heading,
+      subheading,
+      email,
+      phone,
+      location,
+      availability_text,
+      response_time
     );
 
-    res.json({ success: true, message: 'Contact information saved' });
+    const updated = db.prepare('SELECT * FROM contact_info WHERE id = 1').get();
+    res.json({ success: true, message: 'Contact information saved', data: updated });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update contact information' });
   }
 });
+
 
 router.get('/api/admin/social-links', requireAuth, (req, res) => {
   try {
@@ -2027,22 +2058,35 @@ router.get('/api/admin/sections', requireAuth, (req, res) => {
 router.put('/api/admin/sections/:key', requireAuth, (req, res) => {
   try {
     const key = req.params.key;
-    const { is_enabled, section_title, section_subtitle, section_eyebrow, sort_order } = req.body;
+    let existing = db.prepare('SELECT * FROM section_settings WHERE section_key = ?').get(key);
+    if (!existing && !isNaN(Number(key))) {
+      existing = db.prepare('SELECT * FROM section_settings WHERE id = ?').get(Number(key));
+    }
+    if (!existing) {
+      return res.status(404).json({ error: 'Section not found' });
+    }
+
+    const is_enabled = req.body.is_enabled !== undefined ? (req.body.is_enabled ? 1 : 0) : existing.is_enabled;
+    const section_title = req.body.section_title !== undefined ? req.body.section_title : (existing.section_title || '');
+    const section_subtitle = req.body.section_subtitle !== undefined ? req.body.section_subtitle : (existing.section_subtitle || '');
+    const section_eyebrow = req.body.section_eyebrow !== undefined ? req.body.section_eyebrow : (existing.section_eyebrow || '');
+    const sort_order = req.body.sort_order !== undefined ? Number(req.body.sort_order) : existing.sort_order;
 
     db.prepare(`
       UPDATE section_settings
       SET is_enabled = ?, section_title = ?, section_subtitle = ?, section_eyebrow = ?, sort_order = ?
-      WHERE section_key = ?
+      WHERE id = ?
     `).run(
-      is_enabled !== undefined ? (is_enabled ? 1 : 0) : 1,
-      section_title || '',
-      section_subtitle || '',
-      section_eyebrow || '',
-      Number(sort_order) || 0,
-      key
+      is_enabled,
+      section_title,
+      section_subtitle,
+      section_eyebrow,
+      sort_order,
+      existing.id
     );
 
-    res.json({ success: true, message: `Section '${key}' settings updated` });
+    const updated = db.prepare('SELECT * FROM section_settings WHERE id = ?').get(existing.id);
+    res.json({ success: true, message: `Section '${existing.section_key}' settings updated`, data: updated });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update section settings' });
   }
@@ -2063,7 +2107,30 @@ router.get('/api/admin/settings', requireAuth, (req, res) => {
 
 router.put('/api/admin/settings', requireAuth, (req, res) => {
   try {
-    const {
+    const existing = db.prepare('SELECT * FROM site_settings WHERE id = 1').get() || {};
+    const site_title = req.body.site_title !== undefined ? req.body.site_title : (existing.site_title || 'Mofidul — Creative Director & Designer');
+    const meta_description = req.body.meta_description !== undefined ? req.body.meta_description : (existing.meta_description || '');
+    const keywords = (req.body.keywords !== undefined ? req.body.keywords : (req.body.meta_keywords !== undefined ? req.body.meta_keywords : existing.keywords)) || '';
+    const accent_color = req.body.accent_color !== undefined ? req.body.accent_color : (existing.accent_color || '#f5f5f7');
+    const logo_text = req.body.logo_text !== undefined ? req.body.logo_text : (existing.logo_text || 'MOFIDUL');
+    const favicon_url = req.body.favicon_url !== undefined ? req.body.favicon_url : (existing.favicon_url || '/favicon.svg');
+    const default_og_image = (req.body.default_og_image !== undefined ? req.body.default_og_image : (req.body.social_image !== undefined ? req.body.social_image : existing.default_og_image)) || '';
+    const resume_url = req.body.resume_url !== undefined ? req.body.resume_url : (existing.resume_url || '');
+    const show_testimonials = req.body.show_testimonials !== undefined ? (req.body.show_testimonials ? 1 : 0) : existing.show_testimonials;
+    const show_stats = req.body.show_stats !== undefined ? (req.body.show_stats ? 1 : 0) : existing.show_stats;
+    const show_services = req.body.show_services !== undefined ? (req.body.show_services ? 1 : 0) : existing.show_services;
+    const show_skills = req.body.show_skills !== undefined ? (req.body.show_skills ? 1 : 0) : existing.show_skills;
+    const show_experience = req.body.show_experience !== undefined ? (req.body.show_experience ? 1 : 0) : existing.show_experience;
+    const show_about = req.body.show_about !== undefined ? (req.body.show_about ? 1 : 0) : existing.show_about;
+
+    db.prepare(`
+      UPDATE site_settings
+      SET site_title = ?, meta_description = ?, keywords = ?, accent_color = ?,
+          logo_text = ?, favicon_url = ?, default_og_image = ?, resume_url = ?,
+          show_testimonials = ?, show_stats = ?, show_services = ?, show_skills = ?,
+          show_experience = ?, show_about = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = 1
+    `).run(
       site_title,
       meta_description,
       keywords,
@@ -2078,33 +2145,10 @@ router.put('/api/admin/settings', requireAuth, (req, res) => {
       show_skills,
       show_experience,
       show_about
-    } = req.body;
-
-    db.prepare(`
-      UPDATE site_settings
-      SET site_title = ?, meta_description = ?, keywords = ?, accent_color = ?,
-          logo_text = ?, favicon_url = ?, default_og_image = ?, resume_url = ?,
-          show_testimonials = ?, show_stats = ?, show_services = ?, show_skills = ?,
-          show_experience = ?, show_about = ?, updated_at = CURRENT_TIMESTAMP
-      WHERE id = 1
-    `).run(
-      site_title || 'Mofidul — Creative Director & Designer',
-      meta_description || '',
-      keywords || '',
-      accent_color || '#f5f5f7',
-      logo_text || 'MOFIDUL',
-      favicon_url || '/favicon.svg',
-      default_og_image || '',
-      resume_url || '',
-      show_testimonials !== undefined ? (show_testimonials ? 1 : 0) : 1,
-      show_stats !== undefined ? (show_stats ? 1 : 0) : 1,
-      show_services !== undefined ? (show_services ? 1 : 0) : 1,
-      show_skills !== undefined ? (show_skills ? 1 : 0) : 1,
-      show_experience !== undefined ? (show_experience ? 1 : 0) : 1,
-      show_about !== undefined ? (show_about ? 1 : 0) : 1
     );
 
-    res.json({ success: true, message: 'Website settings saved successfully' });
+    const updated = db.prepare('SELECT * FROM site_settings WHERE id = 1').get();
+    res.json({ success: true, message: 'Website settings saved successfully', data: updated });
   } catch (err) {
     console.error('Settings update error:', err);
     res.status(500).json({ error: 'Failed to update website settings' });

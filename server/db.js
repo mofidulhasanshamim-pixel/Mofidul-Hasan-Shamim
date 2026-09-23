@@ -19,7 +19,17 @@ const db = new DatabaseSync(dbPath);
 
 // Enable WAL mode and foreign key constraints for high reliability
 db.exec('PRAGMA journal_mode = WAL;');
+db.exec('PRAGMA synchronous = NORMAL;');
 db.exec('PRAGMA foreign_keys = ON;');
+
+function checkpointDb() {
+  try {
+    db.exec('PRAGMA wal_checkpoint(PASSIVE);');
+  } catch (e) {
+    console.warn('WAL checkpoint warning:', e.message);
+  }
+}
+
 
 /**
  * Initialize all relational database tables
@@ -768,5 +778,8 @@ initSchema();
 runMigrations();
 seedInitialData();
 
+db.checkpointDb = checkpointDb;
+
 module.exports = db;
+
 

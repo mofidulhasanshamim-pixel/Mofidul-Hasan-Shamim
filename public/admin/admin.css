@@ -30,26 +30,39 @@
   --admin-accent-ice: #0284c7;
   --admin-accent-lavender: #8b5cf6;
   --admin-accent-subtle: rgba(99, 102, 241, 0.08);
-  --admin-accent-glow: rgba(99, 102, 241, 0.20);
-  --admin-accent-glow-ice: rgba(56, 189, 248, 0.25);
+  --admin-accent-glow: rgba(99, 102, 241, 0.16);
+  --admin-accent-glow-ice: rgba(56, 189, 248, 0.20);
 
   /* Functional Status Colors */
   --admin-success: #10b981;
   --admin-danger: #ef4444;
   --admin-warning: #f59e0b;
   
-  /* Refined Cloudy Glassmorphism System Tokens */
-  --admin-glass-bg: rgba(255, 255, 255, 0.68);
-  --admin-glass-bg-hover: rgba(255, 255, 255, 0.86);
-  --admin-glass-panel: rgba(255, 255, 255, 0.90);
-  --admin-glass-sidebar: rgba(255, 255, 255, 0.74);
-  --admin-glass-blur: blur(18px) saturate(165%);
-  --admin-glass-blur-sm: blur(12px) saturate(145%);
-  --admin-glass-blur-modal: blur(28px) saturate(180%);
-  --admin-glass-border: rgba(255, 255, 255, 0.78);
-  --admin-glass-border-hover: rgba(99, 102, 241, 0.35);
-  --admin-glass-shadow: 0 12px 32px -8px rgba(15, 23, 42, 0.045), 0 0 0 1px rgba(255, 255, 255, 0.85) inset, 0 1px 2px rgba(15, 23, 42, 0.025);
-  --admin-glass-shadow-lg: 0 24px 48px -12px rgba(15, 23, 42, 0.075), 0 0 0 1px rgba(255, 255, 255, 0.95) inset, 0 0 24px rgba(99, 102, 241, 0.05);
+  /* Apple / Linear Machined Frosted Glass Tokens */
+  --admin-glass-bg: linear-gradient(155deg, rgba(255, 255, 255, 0.78) 0%, rgba(248, 250, 252, 0.65) 100%);
+  --admin-glass-bg-hover: linear-gradient(155deg, rgba(255, 255, 255, 0.90) 0%, rgba(248, 250, 252, 0.78) 100%);
+  --admin-glass-panel: linear-gradient(160deg, rgba(255, 255, 255, 0.92) 0%, rgba(248, 250, 252, 0.86) 100%);
+  --admin-glass-sidebar: rgba(255, 255, 255, 0.72);
+  --admin-glass-blur: blur(20px) saturate(180%);
+  --admin-glass-blur-sm: blur(12px) saturate(160%);
+  --admin-glass-blur-modal: blur(32px) saturate(190%);
+  --admin-glass-border: rgba(255, 255, 255, 0.82);
+  --admin-glass-border-subtle: rgba(15, 23, 42, 0.06);
+  --admin-glass-border-hover: rgba(99, 102, 241, 0.32);
+  --admin-glass-inner-rim: inset 0 1px 1px 0 rgba(255, 255, 255, 0.95), inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+  --admin-glass-shadow: 
+    var(--admin-glass-inner-rim),
+    0 1px 2px 0 rgba(15, 23, 42, 0.03),
+    0 12px 28px -6px rgba(15, 23, 42, 0.045);
+  --admin-glass-shadow-hover: 
+    var(--admin-glass-inner-rim),
+    0 2px 4px 0 rgba(15, 23, 42, 0.03),
+    0 20px 40px -10px rgba(15, 23, 42, 0.075),
+    0 8px 18px -4px rgba(99, 102, 241, 0.06);
+  --admin-glass-shadow-lg: 
+    var(--admin-glass-inner-rim),
+    0 24px 50px -12px rgba(15, 23, 42, 0.08),
+    0 8px 24px -4px rgba(99, 102, 241, 0.05);
 
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -143,13 +156,13 @@ body.page-transitioning {
 .login-card {
   width: 100%;
   max-width: 420px;
-  background: rgba(255, 255, 255, 0.88);
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.88) 0%, rgba(248, 250, 252, 0.78) 100%);
   backdrop-filter: var(--admin-glass-blur);
   -webkit-backdrop-filter: var(--admin-glass-blur);
-  border: 1px solid rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.92);
   border-radius: 18px;
   padding: 42px;
-  box-shadow: 0 24px 60px -15px rgba(15, 23, 42, 0.12);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 1), inset 0 0 0 1px rgba(255, 255, 255, 0.5), 0 24px 60px -15px rgba(15, 23, 42, 0.10);
 }
 
 .login-header {
@@ -185,6 +198,7 @@ body.page-transitioning {
   backdrop-filter: var(--admin-glass-blur);
   -webkit-backdrop-filter: var(--admin-glass-blur);
   border-right: 1px solid var(--admin-glass-border);
+  box-shadow: inset -1px 0 0 0 rgba(255, 255, 255, 0.6), 1px 0 24px 0 rgba(15, 23, 42, 0.025);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -251,7 +265,7 @@ body.page-transitioning {
   padding: 10px 14px;
   width: 100%;
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   border-radius: 8px;
   color: var(--admin-text-secondary);
   font-family: var(--font-sans);
@@ -264,7 +278,9 @@ body.page-transitioning {
 }
 
 .sidebar-tab-btn:hover {
-  background: rgba(15, 23, 42, 0.04);
+  background: rgba(255, 255, 255, 0.65);
+  border-color: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.025);
   color: var(--admin-text-primary);
 }
 
@@ -274,9 +290,10 @@ body.page-transitioning {
 }
 
 .sidebar-tab-btn.active {
-  background: var(--admin-accent-subtle);
+  background: rgba(255, 255, 255, 0.88);
   color: var(--admin-accent-hover);
   border: 1px solid rgba(99, 102, 241, 0.18);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.95), 0 2px 8px rgba(99, 102, 241, 0.06);
   font-weight: 600;
 }
 
@@ -424,6 +441,7 @@ body.page-transitioning {
   padding: 28px;
   margin-bottom: 28px;
   box-shadow: var(--admin-glass-shadow);
+  transition: border-color var(--duration-fast) var(--ease-spring), box-shadow var(--duration-fast) var(--ease-spring);
 }
 
 .card-title-bar {
@@ -468,7 +486,7 @@ body.page-transitioning {
 
 .admin-input, .admin-select, .admin-textarea {
   width: 100%;
-  background: rgba(255, 255, 255, 0.74);
+  background: rgba(255, 255, 255, 0.70);
   backdrop-filter: var(--admin-glass-blur-sm);
   -webkit-backdrop-filter: var(--admin-glass-blur-sm);
   border: 1px solid rgba(15, 23, 42, 0.08);
@@ -478,13 +496,13 @@ body.page-transitioning {
   font-size: 14px;
   color: var(--admin-text-primary);
   outline: none;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  box-shadow: inset 0 1px 1px 0 rgba(15, 23, 42, 0.03), inset 0 0 0 1px rgba(255, 255, 255, 0.7);
   transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
 
 .admin-input:focus, .admin-select:focus, .admin-textarea:focus {
   border-color: var(--admin-accent);
-  box-shadow: 0 0 0 3px var(--admin-accent-subtle), 0 4px 14px rgba(99, 102, 241, 0.12);
+  box-shadow: 0 0 0 3px var(--admin-accent-subtle), 0 4px 14px rgba(99, 102, 241, 0.10), inset 0 1px 1px 0 rgba(255, 255, 255, 0.9);
   background: rgba(255, 255, 255, 0.95);
 }
 
@@ -615,16 +633,16 @@ input:checked + .toggle-slider:before {
 }
 
 .admin-btn-primary {
-  background: #090d16;
+  background: linear-gradient(180deg, #181d27 0%, #090d16 100%);
   color: #ffffff;
   font-weight: 600;
-  border-color: #090d16;
-  box-shadow: 0 2px 10px rgba(9, 13, 22, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.25), 0 2px 10px rgba(9, 13, 22, 0.16);
 }
 .admin-btn-primary:hover {
-  background: #1e1b4b;
-  border-color: var(--admin-accent);
-  box-shadow: 0 4px 16px var(--admin-accent-glow);
+  background: linear-gradient(180deg, #242938 0%, #111827 100%);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.35), 0 4px 16px rgba(9, 13, 22, 0.22);
   transform: translateY(-1px);
 }
 .admin-btn-primary:active {
@@ -633,14 +651,17 @@ input:checked + .toggle-slider:before {
 }
 
 .admin-btn-secondary {
-  background: rgba(255, 255, 255, 0.85);
-  border-color: var(--admin-border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(248, 250, 252, 0.75) 100%);
+  backdrop-filter: var(--admin-glass-blur-sm);
+  -webkit-backdrop-filter: var(--admin-glass-blur-sm);
+  border: 1px solid rgba(255, 255, 255, 0.85);
   color: var(--admin-text-primary);
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.95), 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 .admin-btn-secondary:hover {
-  border-color: var(--admin-accent);
-  background: #ffffff;
+  border-color: rgba(99, 102, 241, 0.25);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 1), 0 3px 8px rgba(15, 23, 42, 0.06);
 }
 .admin-btn-secondary:active {
   transform: scale(0.965);
@@ -678,19 +699,19 @@ input:checked + .toggle-slider:before {
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  background: rgba(255, 255, 255, 0.85);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.84) 0%, rgba(248, 250, 252, 0.72) 100%);
   backdrop-filter: var(--admin-glass-blur-sm);
   -webkit-backdrop-filter: var(--admin-glass-blur-sm);
-  border: 1px solid var(--admin-border);
+  border: 1px solid var(--admin-glass-border);
   border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.9), 0 2px 8px rgba(15, 23, 42, 0.025);
   transition: border-color 0.2s, transform 0.2s, background 0.2s, box-shadow 0.2s;
 }
 
 .list-row-item:hover {
   border-color: var(--admin-glass-border-hover);
-  background: #ffffff;
-  box-shadow: 0 8px 24px -6px rgba(15, 23, 42, 0.08);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.88) 100%);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 1), 0 8px 24px -6px rgba(15, 23, 42, 0.06);
 }
 
 .list-row-item:active {
@@ -794,13 +815,13 @@ input:checked + .toggle-slider:before {
   background: var(--admin-glass-panel);
   backdrop-filter: var(--admin-glass-blur-modal);
   -webkit-backdrop-filter: var(--admin-glass-blur-modal);
-  border: 1px solid rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.92);
   border-radius: 16px;
   width: 100%;
   max-width: 640px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 24px 60px -15px rgba(15, 23, 42, 0.15);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 1), 0 24px 60px -15px rgba(15, 23, 42, 0.14);
   animation: modalScale 0.26s var(--ease-out-quint);
   transition: transform 0.2s var(--ease-out-quint), opacity 0.2s var(--ease-out-quint);
 }
@@ -1059,7 +1080,8 @@ input:checked + .toggle-slider:before {
 .metric-stat-card:hover {
   border-color: var(--admin-glass-border-hover);
   background: var(--admin-glass-bg-hover);
-  box-shadow: var(--admin-glass-shadow-lg), 0 0 20px rgba(99, 102, 241, 0.14);
+  box-shadow: var(--admin-glass-shadow-hover);
+  transform: translateY(-2px);
 }
 
 .metric-stat-card:active {
@@ -1457,7 +1479,7 @@ input:checked + .toggle-slider:before {
   vertical-align: middle;
 }
 .settings-admin-table tr:hover td {
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.75);
 }
 
 /* ==========================================================================
@@ -1465,8 +1487,11 @@ input:checked + .toggle-slider:before {
    ========================================================================== */
 .resume-uploader-card {
   padding: 20px;
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid var(--admin-border);
+  background: var(--admin-glass-bg);
+  backdrop-filter: var(--admin-glass-blur-sm);
+  -webkit-backdrop-filter: var(--admin-glass-blur-sm);
+  border: 1px solid var(--admin-glass-border);
+  box-shadow: var(--admin-glass-shadow);
   border-radius: 12px;
   margin-top: 16px;
 }

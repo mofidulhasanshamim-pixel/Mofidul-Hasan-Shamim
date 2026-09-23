@@ -752,7 +752,7 @@ function setupProjectsModule() {
         });
         showToast('Project updated successfully', 'success');
         closeModal('modal-project');
-        loadProjectsData();
+        await loadProjectsData();
       } else {
         const createRes = await apiFetch('/api/admin/projects', {
           method: 'POST',
@@ -760,7 +760,7 @@ function setupProjectsModule() {
         });
         showToast('Project created successfully', 'success');
         closeModal('modal-project');
-        loadProjectsData();
+        await loadProjectsData();
       }
     } catch (err) {
       showToast(err.message || 'Failed to save project', 'error');
@@ -1138,6 +1138,13 @@ function setupServicesModule() {
 
   document.getElementById('service-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const saveBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = saveBtn ? saveBtn.textContent : 'Save Service';
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+    }
+
     const id = document.getElementById('service-form-id').value;
     const title = document.getElementById('s-title').value.trim();
     const payload = {
@@ -1168,9 +1175,14 @@ function setupServicesModule() {
         showToast('Service created', 'success');
       }
       closeModal('modal-service');
-      loadServicesData();
+      await loadServicesData();
     } catch (err) {
       showToast(err.message || 'Failed to save service', 'error');
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+      }
     }
   });
 }
@@ -1338,6 +1350,13 @@ function setupSkillsModule() {
 
   document.getElementById('skill-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const saveBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = saveBtn ? saveBtn.textContent : 'Save Skill';
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+    }
+
     const id = document.getElementById('skill-form-id').value;
     const payload = {
       name: document.getElementById('sk-name').value.trim(),
@@ -1364,9 +1383,14 @@ function setupSkillsModule() {
         showToast('Skill created', 'success');
       }
       closeModal('modal-skill');
-      loadSkillsData();
+      await loadSkillsData();
     } catch (err) {
       showToast(err.message || 'Failed to save skill', 'error');
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+      }
     }
   });
 }
@@ -1525,6 +1549,13 @@ function setupExperienceModule() {
 
   document.getElementById('experience-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const saveBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = saveBtn ? saveBtn.textContent : 'Save Experience';
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+    }
+
     const id = document.getElementById('experience-form-id').value;
     const payload = {
       company: document.getElementById('ex-company').value.trim(),
@@ -1555,9 +1586,14 @@ function setupExperienceModule() {
         showToast('Experience milestone added', 'success');
       }
       closeModal('modal-experience');
-      loadExperienceData();
+      await loadExperienceData();
     } catch (err) {
       showToast(err.message || 'Failed to save experience', 'error');
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+      }
     }
   });
 }
@@ -1758,6 +1794,13 @@ function setupTestimonialsModule() {
 
   document.getElementById('testimonial-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const saveBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = saveBtn ? saveBtn.textContent : 'Save Testimonial';
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+    }
+
     const id = document.getElementById('testimonial-form-id').value;
     const payload = {
       client_name: document.getElementById('t-name').value.trim(),
@@ -1784,9 +1827,14 @@ function setupTestimonialsModule() {
         showToast('Testimonial added', 'success');
       }
       closeModal('modal-testimonial');
-      loadTestimonialsData();
+      await loadTestimonialsData();
     } catch (err) {
       showToast(err.message || 'Failed to save testimonial', 'error');
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+      }
     }
   });
 }
@@ -1917,6 +1965,8 @@ async function loadProfileData() {
       document.getElementById('field-hero-secondary-cta-text').value = currentHeroData.secondary_cta_text || '';
       document.getElementById('field-hero-secondary-cta-url').value = currentHeroData.secondary_cta_url || '';
       document.getElementById('field-hero-availability').value = currentHeroData.availability_status || '';
+      const heroImgInput = document.getElementById('field-hero-profile-image');
+      if (heroImgInput) heroImgInput.value = currentHeroData.profile_image_url || '';
       updateProfileImagePreview(currentHeroData.profile_image_url);
     }
 
@@ -1984,16 +2034,35 @@ function setupProfileModule() {
 
   removeBtn.addEventListener('click', async () => {
     if (!confirm('Remove official profile photo?')) return;
+    removeBtn.disabled = true;
     try {
-      await apiFetch('/api/admin/hero', {
+      const payload = {
+        greeting: document.getElementById('field-hero-greeting').value.trim(),
+        name: document.getElementById('field-hero-name').value.trim(),
+        role_title: document.getElementById('field-hero-role').value.trim(),
+        positioning_statement: document.getElementById('field-hero-positioning').value.trim(),
+        primary_cta_text: document.getElementById('field-hero-primary-cta-text').value.trim(),
+        primary_cta_url: document.getElementById('field-hero-primary-cta-url').value.trim(),
+        secondary_cta_text: document.getElementById('field-hero-secondary-cta-text').value.trim(),
+        secondary_cta_url: document.getElementById('field-hero-secondary-cta-url').value.trim(),
+        availability_status: document.getElementById('field-hero-availability').value.trim(),
+        profile_image_url: ''
+      };
+      const res = await apiFetch('/api/admin/hero', {
         method: 'PUT',
-        body: JSON.stringify({ ...currentHeroData, profile_image_url: '' })
+        body: JSON.stringify(payload)
       });
-      if (currentHeroData) currentHeroData.profile_image_url = '';
+      if (res && res.data) {
+        currentHeroData = res.data;
+      } else {
+        currentHeroData = { ...(currentHeroData || {}), ...payload };
+      }
       updateProfileImagePreview('');
       showToast('Profile photo removed', 'success');
     } catch (err) {
       showToast('Failed to remove photo', 'error');
+    } finally {
+      removeBtn.disabled = false;
     }
   });
 
@@ -2035,6 +2104,16 @@ function setupProfileModule() {
   // Hero form submit
   document.getElementById('hero-content-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const saveBtn = document.getElementById('btn-save-hero') || e.target.querySelector('button[type="submit"]');
+    const originalText = saveBtn ? saveBtn.textContent : 'Save Changes';
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+    }
+
+    const hiddenImg = document.getElementById('field-hero-profile-image');
+    const profileImageUrl = hiddenImg ? hiddenImg.value.trim() : (currentHeroData?.profile_image_url || '');
+
     const payload = {
       greeting: document.getElementById('field-hero-greeting').value.trim(),
       name: document.getElementById('field-hero-name').value.trim(),
@@ -2045,24 +2124,43 @@ function setupProfileModule() {
       secondary_cta_text: document.getElementById('field-hero-secondary-cta-text').value.trim(),
       secondary_cta_url: document.getElementById('field-hero-secondary-cta-url').value.trim(),
       availability_status: document.getElementById('field-hero-availability').value.trim(),
-      profile_image_url: currentHeroData?.profile_image_url || ''
+      profile_image_url: profileImageUrl
     };
 
     try {
-      await apiFetch('/api/admin/hero', {
+      const res = await apiFetch('/api/admin/hero', {
         method: 'PUT',
         body: JSON.stringify(payload)
       });
-      currentHeroData = { ...currentHeroData, ...payload };
+      if (res && res.data) {
+        currentHeroData = res.data;
+      } else {
+        currentHeroData = { ...(currentHeroData || {}), ...payload };
+      }
+      if (currentHeroData && currentHeroData.profile_image_url !== undefined) {
+        updateProfileImagePreview(currentHeroData.profile_image_url);
+      }
       showToast('Hero section updated successfully', 'success');
     } catch (err) {
       showToast('Failed to save hero changes', 'error');
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+      }
     }
   });
 
   // About form submit
   document.getElementById('about-content-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const saveBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = saveBtn ? saveBtn.textContent : 'Save Changes';
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+    }
+
     const payload = {
       eyebrow: document.getElementById('field-about-eyebrow').value.trim(),
       headline: document.getElementById('field-about-headline').value.trim(),
@@ -2083,12 +2181,24 @@ function setupProfileModule() {
       showToast('About section saved successfully', 'success');
     } catch (err) {
       showToast('Failed to save about section', 'error');
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+      }
     }
   });
 
   // Contact form submit
   document.getElementById('contact-info-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const saveBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = saveBtn ? saveBtn.textContent : 'Save Changes';
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+    }
+
     const payload = {
       heading: document.getElementById('field-contact-heading').value.trim(),
       subheading: document.getElementById('field-contact-subheading').value.trim(),
@@ -2106,6 +2216,11 @@ function setupProfileModule() {
       showToast('Contact information saved', 'success');
     } catch (err) {
       showToast('Failed to save contact info', 'error');
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+      }
     }
   });
 
@@ -2114,6 +2229,13 @@ function setupProfileModule() {
 
   document.getElementById('social-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const saveBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = saveBtn ? saveBtn.textContent : 'Save';
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+    }
+
     const id = document.getElementById('social-form-id').value;
     const payload = {
       platform: document.getElementById('soc-platform').value.trim(),
@@ -2131,9 +2253,14 @@ function setupProfileModule() {
       }
       showToast('Social link saved', 'success');
       closeModal('modal-social');
-      loadSocialLinks();
+      await loadSocialLinks();
     } catch (err) {
       showToast('Failed to save link', 'error');
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+      }
     }
   });
 }
@@ -2143,6 +2270,11 @@ function updateProfileImagePreview(url) {
   const emptyState = document.getElementById('hero-profile-empty');
   const removeBtn = document.getElementById('btn-remove-profile-photo');
   const badge = document.getElementById('profile-status-badge');
+  const hiddenInput = document.getElementById('field-hero-profile-image');
+
+  if (hiddenInput) {
+    hiddenInput.value = url || '';
+  }
 
   if (url && url.trim() !== '') {
     previewImg.src = url;
@@ -2160,6 +2292,11 @@ function updateProfileImagePreview(url) {
 }
 
 async function handleProfileImageUpload(file) {
+  const triggerBtn = document.getElementById('btn-trigger-profile-upload');
+  const dropzone = document.getElementById('hero-profile-dropzone');
+  if (triggerBtn) triggerBtn.disabled = true;
+  if (dropzone) dropzone.style.pointerEvents = 'none';
+
   const formData = new FormData();
   formData.append('file', file);
   showToast('Uploading profile image...', 'success');
@@ -2168,17 +2305,36 @@ async function handleProfileImageUpload(file) {
     const uploadRes = await apiFetch('/api/admin/upload', { method: 'POST', body: formData });
     if (uploadRes && uploadRes.success && uploadRes.url) {
       const newUrl = uploadRes.url;
-      await apiFetch('/api/admin/hero', {
+      const payload = {
+        greeting: document.getElementById('field-hero-greeting').value.trim(),
+        name: document.getElementById('field-hero-name').value.trim(),
+        role_title: document.getElementById('field-hero-role').value.trim(),
+        positioning_statement: document.getElementById('field-hero-positioning').value.trim(),
+        primary_cta_text: document.getElementById('field-hero-primary-cta-text').value.trim(),
+        primary_cta_url: document.getElementById('field-hero-primary-cta-url').value.trim(),
+        secondary_cta_text: document.getElementById('field-hero-secondary-cta-text').value.trim(),
+        secondary_cta_url: document.getElementById('field-hero-secondary-cta-url').value.trim(),
+        availability_status: document.getElementById('field-hero-availability').value.trim(),
+        profile_image_url: newUrl
+      };
+      const heroRes = await apiFetch('/api/admin/hero', {
         method: 'PUT',
-        body: JSON.stringify({ ...currentHeroData, profile_image_url: newUrl })
+        body: JSON.stringify(payload)
       });
-      if (currentHeroData) currentHeroData.profile_image_url = newUrl;
+      if (heroRes && heroRes.data) {
+        currentHeroData = heroRes.data;
+      } else {
+        currentHeroData = { ...(currentHeroData || {}), ...payload };
+      }
       updateProfileImagePreview(newUrl);
       showToast('Profile photo updated & persisted', 'success');
       loadMediaData();
     }
   } catch (err) {
     showToast(err.message || 'Image upload failed', 'error');
+  } finally {
+    if (triggerBtn) triggerBtn.disabled = false;
+    if (dropzone) dropzone.style.pointerEvents = '';
   }
 }
 
@@ -2383,9 +2539,9 @@ async function loadSettingsData() {
       currentSettingsData = res.data;
       document.getElementById('field-settings-title').value = currentSettingsData.site_title || '';
       document.getElementById('field-settings-desc').value = currentSettingsData.meta_description || '';
-      document.getElementById('field-settings-keywords').value = currentSettingsData.meta_keywords || '';
+      document.getElementById('field-settings-keywords').value = currentSettingsData.keywords || currentSettingsData.meta_keywords || '';
       document.getElementById('field-settings-logo').value = currentSettingsData.logo_text || '';
-      document.getElementById('field-settings-og-image').value = currentSettingsData.social_image || '';
+      document.getElementById('field-settings-og-image').value = currentSettingsData.default_og_image || currentSettingsData.social_image || '';
     }
   } catch (err) {
     console.error('Error loading settings:', err);
@@ -2438,10 +2594,13 @@ async function updateSectionField(id, field, value) {
     const sec = allSectionsData.find(s => s.id === id);
     if (!sec) return;
     const payload = { ...sec, [field]: value };
-    await apiFetch(`/api/admin/sections/${id}`, {
+    const res = await apiFetch(`/api/admin/sections/${sec.section_key}`, {
       method: 'PUT',
       body: JSON.stringify(payload)
     });
+    if (res && res.data) {
+      Object.assign(sec, res.data);
+    }
     showToast('Section settings updated', 'success');
   } catch (err) {
     showToast('Failed to update section', 'error');
@@ -2453,11 +2612,15 @@ async function toggleSectionEnabled(id, isEnabled) {
     const sec = allSectionsData.find(s => s.id === id);
     if (!sec) return;
     const payload = { ...sec, is_enabled: isEnabled ? 1 : 0 };
-    await apiFetch(`/api/admin/sections/${id}`, {
+    const res = await apiFetch(`/api/admin/sections/${sec.section_key}`, {
       method: 'PUT',
       body: JSON.stringify(payload)
     });
-    sec.is_enabled = isEnabled ? 1 : 0;
+    if (res && res.data) {
+      Object.assign(sec, res.data);
+    } else {
+      sec.is_enabled = isEnabled ? 1 : 0;
+    }
     showToast(`Section #${sec.section_key} ${isEnabled ? 'enabled' : 'disabled'}`, 'success');
   } catch (err) {
     showToast('Failed to update section toggle', 'error');
@@ -2530,22 +2693,40 @@ function setupSettingsModule() {
   // Identity & Meta
   document.getElementById('settings-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const saveBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = saveBtn ? saveBtn.textContent : 'Save Settings';
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+    }
+
     const payload = {
       site_title: document.getElementById('field-settings-title').value.trim(),
       meta_description: document.getElementById('field-settings-desc').value.trim(),
+      keywords: document.getElementById('field-settings-keywords').value.trim(),
       meta_keywords: document.getElementById('field-settings-keywords').value.trim(),
       logo_text: document.getElementById('field-settings-logo').value.trim(),
-      social_image: document.getElementById('field-settings-og-image').value.trim()
+      default_og_image: document.getElementById('field-settings-og-image').value.trim(),
+      social_image: document.getElementById('field-settings-og-image').value.trim(),
+      resume_url: currentSettingsData?.resume_url || ''
     };
 
     try {
-      await apiFetch('/api/admin/settings', {
+      const res = await apiFetch('/api/admin/settings', {
         method: 'PUT',
         body: JSON.stringify(payload)
       });
+      if (res && res.data) {
+        currentSettingsData = res.data;
+      }
       showToast('Global settings saved successfully', 'success');
     } catch (err) {
       showToast('Failed to save settings', 'error');
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+      }
     }
   });
 
@@ -2554,6 +2735,13 @@ function setupSettingsModule() {
 
   document.getElementById('nav-link-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const saveBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = saveBtn ? saveBtn.textContent : 'Save';
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+    }
+
     const id = document.getElementById('nav-link-form-id').value;
     const payload = {
       label: document.getElementById('nav-label').value.trim(),
@@ -2577,9 +2765,14 @@ function setupSettingsModule() {
         showToast('Navigation link added', 'success');
       }
       closeModal('modal-nav-link');
-      loadNavigationData();
+      await loadNavigationData();
     } catch (err) {
       showToast(err.message || 'Failed to save navigation link', 'error');
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+      }
     }
   });
 
@@ -2729,6 +2922,13 @@ function setupStatsModule() {
 
   document.getElementById('stat-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const saveBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = saveBtn ? saveBtn.textContent : 'Save Metric';
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+    }
+
     const id = document.getElementById('stat-form-id').value;
     const payload = {
       metric_value: document.getElementById('stat-value').value.trim(),
@@ -2747,9 +2947,14 @@ function setupStatsModule() {
       }
       showToast('Metric saved', 'success');
       closeModal('modal-stat');
-      loadStatsData();
+      await loadStatsData();
     } catch (err) {
       showToast('Failed to save metric', 'error');
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+      }
     }
   });
 }

@@ -133,6 +133,8 @@ function renderHero(hero) {
           alt="${escapeHtml(hero.profile_image_alt || hero.name || 'Mofidul')}" 
           class="profile-image-elem"
           loading="eager"
+          decoding="async"
+          fetchpriority="high"
         />
       `;
     } else {
@@ -557,7 +559,7 @@ function displayProjectsList(list) {
   grid.innerHTML = list.map((project, idx) => {
     // If no cover image uploaded, render clean typographic cover
     const mediaHtml = project.cover_image && project.cover_image.trim() !== ''
-      ? `<img src="${escapeHtml(project.cover_image)}" alt="${escapeHtml(project.title)}" class="project-img" loading="lazy" />`
+      ? `<img src="${escapeHtml(project.cover_image)}" alt="${escapeHtml(project.title)}" class="project-img" loading="lazy" decoding="async" />`
       : `
         <div class="project-typographic-cover">
           <div class="project-cover-top">
@@ -657,7 +659,7 @@ function renderTestimonials(testimonials, isVisible = 1) {
 
   grid.innerHTML = testimonials.map((t, tIdx) => {
     const avatarHtml = t.avatar_url && t.avatar_url.trim() !== ''
-      ? `<img src="${escapeHtml(t.avatar_url)}" alt="${escapeHtml(t.client_name)}" class="testimonial-avatar" />`
+      ? `<img src="${escapeHtml(t.avatar_url)}" alt="${escapeHtml(t.client_name)}" class="testimonial-avatar" loading="lazy" decoding="async" />`
       : `<div class="testimonial-avatar-placeholder">${escapeHtml(t.client_name.charAt(0))}</div>`;
 
     return `
@@ -845,7 +847,7 @@ function openProjectModal(project) {
   // 1. Cover Image
   if (coverWrapper) {
     if (project.cover_image && project.cover_image.trim() !== '') {
-      coverWrapper.innerHTML = `<img src="${escapeHtml(project.cover_image)}" alt="${escapeHtml(project.title)}" class="modal-project-cover" />`;
+      coverWrapper.innerHTML = `<img src="${escapeHtml(project.cover_image)}" alt="${escapeHtml(project.title)}" class="modal-project-cover" decoding="async" />`;
     } else {
       coverWrapper.innerHTML = '';
     }
@@ -1009,7 +1011,7 @@ function openProjectModal(project) {
         const captionHtml = img.caption ? `<div class="gallery-item-caption">${escapeHtml(img.caption)}</div>` : '';
         return `
           <div class="gallery-item-card" onclick="openLightbox('${escapeHtml(img.image_url)}', '${escapeHtml(img.caption || alt)}')">
-            <img src="${escapeHtml(img.image_url)}" alt="${escapeHtml(alt)}" class="gallery-item-img" loading="lazy" />
+            <img src="${escapeHtml(img.image_url)}" alt="${escapeHtml(alt)}" class="gallery-item-img" loading="lazy" decoding="async" />
             ${captionHtml}
           </div>
         `;
@@ -1075,14 +1077,16 @@ function initScrollAnimations() {
 
   // 2. Element-level Observer: Triggers entrance when in viewport, resets when off-screen
   const reveals = document.querySelectorAll('.reveal-init');
+  const isMobile = window.innerWidth <= 768 || (window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches);
+
   if (reveals.length) {
     scrollRevealObserver = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         const el = entry.target;
         if (entry.isIntersecting) {
           el.classList.add('revealed');
-        } else {
-          // Off-screen reset: Only reset when element has scrolled well past the viewport
+        } else if (!isMobile) {
+          // Off-screen reset: Only reset on desktop when element has scrolled well past the viewport
           const rect = entry.boundingClientRect;
           const winHeight = window.innerHeight || document.documentElement.clientHeight;
           if (rect.bottom < -40 || rect.top > winHeight + 40) {
@@ -1113,16 +1117,12 @@ function initScrollAnimations() {
             window.triggerHeroEntrance();
           }
 
-          // When section enters viewport, reveal elements that are in or near view
+          // Directly reveal elements without triggering forced layout recalculation
           sectionReveals.forEach(el => {
-            const rect = el.getBoundingClientRect();
-            const winHeight = window.innerHeight || document.documentElement.clientHeight;
-            if (rect.top < winHeight - 15 && rect.bottom > 0) {
-              el.classList.add('revealed');
-            }
+            el.classList.add('revealed');
           });
-        } else {
-          // When entire section leaves viewport, reset all reveal elements inside it
+        } else if (!isMobile) {
+          // On desktop, replay resets when section fully leaves viewport
           sectionReveals.forEach(el => {
             el.classList.remove('revealed');
           });
@@ -1520,14 +1520,15 @@ function setupIntroLoader() {
   if (!loader) return;
 
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const alreadySeen = sessionStorage.getItem('mofidul_intro_seen') === '1';
 
-  // Fast resolution for users requesting reduced motion
-  if (prefersReduced) {
+  // Fast resolution for users requesting reduced motion or repeat visits in same session
+  if (prefersReduced || alreadySeen) {
     loader.classList.add('loader-exiting');
     setTimeout(() => {
       loader.classList.add('loader-hidden');
       loader.setAttribute('aria-hidden', 'true');
-    }, 200);
+    }, 150);
     if (typeof window.triggerHeroEntrance === 'function') {
       window.triggerHeroEntrance();
     }
@@ -2002,11 +2003,14 @@ function setupHeroAtmosphereParallax() {
     }
 
     const winH = window.innerHeight || 800;
+    const isMobileDevice = window.innerWidth <= 768 || (window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches);
 
     activeSections.forEach(sec => {
-      // Spring interpolation for pointer tracking
-      sec.currentMouseX += (sec.targetMouseX - sec.currentMouseX) * 0.065;
-      sec.currentMouseY += (sec.targetMouseY - sec.currentMouseY) * 0.065;
+      // Spring interpolation for pointer tracking (only on desktop)
+      if (!isMobileDevice) {
+        sec.currentMouseX += (sec.targetMouseX - sec.currentMouseX) * 0.065;
+        sec.currentMouseY += (sec.targetMouseY - sec.currentMouseY) * 0.065;
+      }
 
       // Section-Aware Scroll Calculation:
       // When section center matches viewport center, rawOffset = 0
@@ -2027,55 +2031,58 @@ function setupHeroAtmosphereParallax() {
       const p = (fluidPhase * sec.speedFactor) + sec.phaseOffset;
       const boost = (sec.id === 'hero' ? entranceBoost : 0) + (sec.pointerBoost * 0.22);
 
-      // Ribbon 1: Primary Broad Diagonal Wave (drifting, floating, rotating)
-      if (sec.ribbons[0]) {
-        const p1 = p;
-        const ambX1 = Math.sin(p1) * sec.r1DriftX + Math.cos(p1 * 0.54) * (sec.r1DriftX * 0.42);
-        const ambY1 = Math.cos(p1 * 0.8) * sec.r1DriftY + Math.sin(p1 * 0.42) * (sec.r1DriftY * 0.38);
-        const amb1Rot = Math.sin(p1 * 0.68) * sec.r1Rot;
-        const scale1 = 1 + Math.sin(p1 * 0.56) * sec.r1Scale + (boost * 0.035);
+      // On mobile devices, ribbons are display: none in CSS, so skip continuous transforms!
+      if (!isMobileDevice) {
+        // Ribbon 1: Primary Broad Diagonal Wave (drifting, floating, rotating)
+        if (sec.ribbons[0]) {
+          const p1 = p;
+          const ambX1 = Math.sin(p1) * sec.r1DriftX + Math.cos(p1 * 0.54) * (sec.r1DriftX * 0.42);
+          const ambY1 = Math.cos(p1 * 0.8) * sec.r1DriftY + Math.sin(p1 * 0.42) * (sec.r1DriftY * 0.38);
+          const amb1Rot = Math.sin(p1 * 0.68) * sec.r1Rot;
+          const scale1 = 1 + Math.sin(p1 * 0.56) * sec.r1Scale + (boost * 0.035);
 
-        const r1X = (sec.currentMouseX * 0.82) + ambX1;
-        const r1Y = (sec.currentScroll * sec.r1Scroll) + (sec.currentMouseY * 0.82) + ambY1;
-        sec.ribbons[0].style.transform = `translate3d(${r1X.toFixed(2)}px, ${r1Y.toFixed(2)}px, 0) rotate(${amb1Rot.toFixed(2)}deg) scale(${scale1.toFixed(3)})`;
-      }
+          const r1X = (sec.currentMouseX * 0.82) + ambX1;
+          const r1Y = (sec.currentScroll * sec.r1Scroll) + (sec.currentMouseY * 0.82) + ambY1;
+          sec.ribbons[0].style.transform = `translate3d(${r1X.toFixed(2)}px, ${r1Y.toFixed(2)}px, 0) rotate(${amb1Rot.toFixed(2)}deg) scale(${scale1.toFixed(3)})`;
+        }
 
-      // Ribbon 2: Secondary Counter-Drift Wave (counter-drift, folding depth)
-      if (sec.ribbons[1]) {
-        const p2 = p * 0.90 + 1.4;
-        const ambX2 = Math.cos(p2) * sec.r2DriftX + Math.sin(p2 * 0.62) * (Math.abs(sec.r2DriftX) * 0.42);
-        const ambY2 = Math.sin(p2 * 0.82) * sec.r2DriftY + Math.cos(p2 * 0.46) * (sec.r2DriftY * -0.4);
-        const rot2 = Math.cos(p2 * 0.6) * sec.r2Rot;
-        const scale2 = 1 + Math.cos(p2 * 0.5) * sec.r2Scale + (boost * 0.03);
+        // Ribbon 2: Secondary Counter-Drift Wave (counter-drift, folding depth)
+        if (sec.ribbons[1]) {
+          const p2 = p * 0.90 + 1.4;
+          const ambX2 = Math.cos(p2) * sec.r2DriftX + Math.sin(p2 * 0.62) * (Math.abs(sec.r2DriftX) * 0.42);
+          const ambY2 = Math.sin(p2 * 0.82) * sec.r2DriftY + Math.cos(p2 * 0.46) * (sec.r2DriftY * -0.4);
+          const rot2 = Math.cos(p2 * 0.6) * sec.r2Rot;
+          const scale2 = 1 + Math.cos(p2 * 0.5) * sec.r2Scale + (boost * 0.03);
 
-        const r2X = (sec.currentMouseX * 0.62) + ambX2;
-        const r2Y = (sec.currentScroll * sec.r2Scroll) + (sec.currentMouseY * 0.62) + ambY2;
-        sec.ribbons[1].style.transform = `translate3d(${r2X.toFixed(2)}px, ${r2Y.toFixed(2)}px, 0) rotate(${rot2.toFixed(2)}deg) scale(${scale2.toFixed(3)})`;
-      }
+          const r2X = (sec.currentMouseX * 0.62) + ambX2;
+          const r2Y = (sec.currentScroll * sec.r2Scroll) + (sec.currentMouseY * 0.62) + ambY2;
+          sec.ribbons[1].style.transform = `translate3d(${r2X.toFixed(2)}px, ${r2Y.toFixed(2)}px, 0) rotate(${rot2.toFixed(2)}deg) scale(${scale2.toFixed(3)})`;
+        }
 
-      // Ribbon 3: Luminous Specular Spine Wave (shimmering, energetic, reactive)
-      if (sec.ribbons[2]) {
-        const p3 = p * 1.25 + 2.8;
-        const ambX3 = Math.sin(p3) * sec.r3DriftX + Math.cos(p3 * 0.5) * (sec.r3DriftX * -0.42);
-        const ambY3 = Math.cos(p3 * 0.9) * sec.r3DriftY + Math.sin(p3 * 0.36) * (Math.abs(sec.r3DriftY) * 0.4);
-        const rot3 = Math.sin(p3 * 0.76) * sec.r3Rot;
-        const scale3 = 1 + Math.sin(p3 * 0.7) * sec.r3Scale + (boost * 0.045);
+        // Ribbon 3: Luminous Specular Spine Wave (shimmering, energetic, reactive)
+        if (sec.ribbons[2]) {
+          const p3 = p * 1.25 + 2.8;
+          const ambX3 = Math.sin(p3) * sec.r3DriftX + Math.cos(p3 * 0.5) * (sec.r3DriftX * -0.42);
+          const ambY3 = Math.cos(p3 * 0.9) * sec.r3DriftY + Math.sin(p3 * 0.36) * (Math.abs(sec.r3DriftY) * 0.4);
+          const rot3 = Math.sin(p3 * 0.76) * sec.r3Rot;
+          const scale3 = 1 + Math.sin(p3 * 0.7) * sec.r3Scale + (boost * 0.045);
 
-        const r3X = (sec.currentMouseX * 1.28) + ambX3;
-        const r3Y = (sec.currentScroll * sec.r3Scroll) + (sec.currentMouseY * 1.28) + ambY3;
-        sec.ribbons[2].style.transform = `translate3d(${r3X.toFixed(2)}px, ${r3Y.toFixed(2)}px, 0) rotate(${rot3.toFixed(2)}deg) scale(${scale3.toFixed(3)})`;
-      }
+          const r3X = (sec.currentMouseX * 1.28) + ambX3;
+          const r3Y = (sec.currentScroll * sec.r3Scroll) + (sec.currentMouseY * 1.28) + ambY3;
+          sec.ribbons[2].style.transform = `translate3d(${r3X.toFixed(2)}px, ${r3Y.toFixed(2)}px, 0) rotate(${rot3.toFixed(2)}deg) scale(${scale3.toFixed(3)})`;
+        }
 
-      // Ribbon 4: Deep Atmospheric Base Ribbon (e.g. Hero ribbon 4)
-      if (sec.ribbons[3]) {
-        const p4 = p * 0.76 + 2.1;
-        const ambX4 = Math.cos(p4) * sec.r4DriftX + Math.sin(p4 * 0.42) * 22;
-        const ambY4 = Math.sin(p4 * 0.86) * sec.r4DriftY + Math.cos(p4 * 0.32) * -18;
-        const scale4 = 1 + Math.cos(p4 * 0.44) * sec.r4Scale + (boost * 0.03);
+        // Ribbon 4: Deep Atmospheric Base Ribbon (e.g. Hero ribbon 4)
+        if (sec.ribbons[3]) {
+          const p4 = p * 0.76 + 2.1;
+          const ambX4 = Math.cos(p4) * sec.r4DriftX + Math.sin(p4 * 0.42) * 22;
+          const ambY4 = Math.sin(p4 * 0.86) * sec.r4DriftY + Math.cos(p4 * 0.32) * -18;
+          const scale4 = 1 + Math.cos(p4 * 0.44) * sec.r4Scale + (boost * 0.03);
 
-        const r4X = (sec.currentMouseX * 0.42) + ambX4;
-        const r4Y = (sec.currentScroll * sec.r4Scroll) + (sec.currentMouseY * 0.42) + ambY4;
-        sec.ribbons[3].style.transform = `translate3d(${r4X.toFixed(2)}px, ${r4Y.toFixed(2)}px, 0) scale(${scale4.toFixed(3)})`;
+          const r4X = (sec.currentMouseX * 0.42) + ambX4;
+          const r4Y = (sec.currentScroll * sec.r4Scroll) + (sec.currentMouseY * 0.42) + ambY4;
+          sec.ribbons[3].style.transform = `translate3d(${r4X.toFixed(2)}px, ${r4Y.toFixed(2)}px, 0) scale(${scale4.toFixed(3)})`;
+        }
       }
 
       // Ambient Glow Layer: Pulsating radiant illumination
@@ -2091,54 +2098,60 @@ function setupHeroAtmosphereParallax() {
       }
 
       // Optional content parallax (e.g. Hero grid subtle elevation)
-      if (sec.content) {
+      if (sec.content && !isMobileDevice) {
         const contentY = sec.currentScroll * 0.035;
         sec.content.style.transform = `translate3d(0, ${contentY.toFixed(2)}px, 0)`;
       }
     });
 
     // Living Continuous S-Wave Ribbon Motion:
-    // Seamlessly flows, waves, morphs, shifts side-to-side (Right ↔ Left ↔ Right ↔ Left), and gently breathes in light intensity
+    // Seamlessly flows, waves, morphs, shifts side-to-side, and gently breathes in light intensity
     if (spine) {
-      // Gentle light intensity breathing (soft blue-purple glow)
-      const spineBreath = 0.88 + Math.sin(fluidPhase * 0.60) * 0.08;
-      spine.style.opacity = spineBreath.toFixed(3);
+      if (isMobileDevice) {
+        // Lightweight mobile spine: gentle breathing opacity only, no expensive compound matrix transformations
+        const spineBreath = 0.88 + Math.sin(fluidPhase * 0.60) * 0.08;
+        spine.style.opacity = spineBreath.toFixed(3);
+      } else {
+        // Gentle light intensity breathing (soft blue-purple glow)
+        const spineBreath = 0.88 + Math.sin(fluidPhase * 0.60) * 0.08;
+        spine.style.opacity = spineBreath.toFixed(3);
 
-      // Large soft compound wave sway shifting side to side across the page
-      const spineWaveX = Math.sin(fluidPhase * 0.54) * 38 + Math.cos(fluidPhase * 0.28) * 16;
-      const spineWaveY = Math.cos(fluidPhase * 0.44) * 14 + Math.sin(fluidPhase * 0.22) * 8;
-      const spineScale = 1.0 + Math.sin(fluidPhase * 0.36) * 0.022;
-      spine.style.transform = `translate3d(${spineWaveX.toFixed(2)}px, ${spineWaveY.toFixed(2)}px, 0) scale(${spineScale.toFixed(4)})`;
+        // Large soft compound wave sway shifting side to side across the page
+        const spineWaveX = Math.sin(fluidPhase * 0.54) * 38 + Math.cos(fluidPhase * 0.28) * 16;
+        const spineWaveY = Math.cos(fluidPhase * 0.44) * 14 + Math.sin(fluidPhase * 0.22) * 8;
+        const spineScale = 1.0 + Math.sin(fluidPhase * 0.36) * 0.022;
+        spine.style.transform = `translate3d(${spineWaveX.toFixed(2)}px, ${spineWaveY.toFixed(2)}px, 0) scale(${spineScale.toFixed(4)})`;
 
-      // Differential morphing and gentle deformation on volumetric ribbon body
-      if (spineBody) {
-        const bodyMorphX = Math.cos(fluidPhase * 0.64) * 18 + Math.sin(fluidPhase * 0.32) * 8;
-        const bodyMorphY = Math.sin(fluidPhase * 0.52) * 12;
-        const bodyScaleX = 1 + Math.sin(fluidPhase * 0.46) * 0.032;
-        const bodyScaleY = 1 + Math.cos(fluidPhase * 0.38) * 0.022;
-        spineBody.style.transform = `translate3d(${bodyMorphX.toFixed(2)}px, ${bodyMorphY.toFixed(2)}px, 0) scale(${bodyScaleX.toFixed(4)}, ${bodyScaleY.toFixed(4)})`;
-      }
+        // Differential morphing and gentle deformation on volumetric ribbon body
+        if (spineBody) {
+          const bodyMorphX = Math.cos(fluidPhase * 0.64) * 18 + Math.sin(fluidPhase * 0.32) * 8;
+          const bodyMorphY = Math.sin(fluidPhase * 0.52) * 12;
+          const bodyScaleX = 1 + Math.sin(fluidPhase * 0.46) * 0.032;
+          const bodyScaleY = 1 + Math.cos(fluidPhase * 0.38) * 0.022;
+          spineBody.style.transform = `translate3d(${bodyMorphX.toFixed(2)}px, ${bodyMorphY.toFixed(2)}px, 0) scale(${bodyScaleX.toFixed(4)}, ${bodyScaleY.toFixed(4)})`;
+        }
 
-      // Counter-wave deformation on specular ribbon contours
-      if (spineEdge1) {
-        const edge1X = Math.sin(fluidPhase * 0.70 + 1.2) * 16;
-        const edge1Y = Math.cos(fluidPhase * 0.54 + 0.8) * 10;
-        spineEdge1.style.transform = `translate3d(${edge1X.toFixed(2)}px, ${edge1Y.toFixed(2)}px, 0)`;
-      }
-      if (spineEdge2) {
-        const edge2X = Math.cos(fluidPhase * 0.68 + 2.2) * -16;
-        const edge2Y = Math.sin(fluidPhase * 0.58 + 1.4) * 10;
-        spineEdge2.style.transform = `translate3d(${edge2X.toFixed(2)}px, ${edge2Y.toFixed(2)}px, 0)`;
-      }
+        // Counter-wave deformation on specular ribbon contours
+        if (spineEdge1) {
+          const edge1X = Math.sin(fluidPhase * 0.70 + 1.2) * 16;
+          const edge1Y = Math.cos(fluidPhase * 0.54 + 0.8) * 10;
+          spineEdge1.style.transform = `translate3d(${edge1X.toFixed(2)}px, ${edge1Y.toFixed(2)}px, 0)`;
+        }
+        if (spineEdge2) {
+          const edge2X = Math.cos(fluidPhase * 0.68 + 2.2) * -16;
+          const edge2Y = Math.sin(fluidPhase * 0.58 + 1.4) * 10;
+          spineEdge2.style.transform = `translate3d(${edge2X.toFixed(2)}px, ${edge2Y.toFixed(2)}px, 0)`;
+        }
 
-      // Harmonized drift on center spine line and energy pulse
-      if (spineBase) {
-        const baseX = Math.sin(fluidPhase * 0.58) * 10;
-        spineBase.style.transform = `translate3d(${baseX.toFixed(2)}px, 0, 0)`;
-      }
-      if (spinePulse) {
-        const pulseX = Math.sin(fluidPhase * 0.58) * 10;
-        spinePulse.style.transform = `translate3d(${pulseX.toFixed(2)}px, 0, 0)`;
+        // Harmonized drift on center spine line and energy pulse
+        if (spineBase) {
+          const baseX = Math.sin(fluidPhase * 0.58) * 10;
+          spineBase.style.transform = `translate3d(${baseX.toFixed(2)}px, 0, 0)`;
+        }
+        if (spinePulse) {
+          const pulseX = Math.sin(fluidPhase * 0.58) * 10;
+          spinePulse.style.transform = `translate3d(${pulseX.toFixed(2)}px, 0, 0)`;
+        }
       }
     }
 
