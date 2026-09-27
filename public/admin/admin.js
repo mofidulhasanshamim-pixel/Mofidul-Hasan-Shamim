@@ -426,6 +426,7 @@ function setupLoginForm() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
         body: JSON.stringify({ username, password })
       });
 
@@ -452,7 +453,7 @@ function setupLoginForm() {
 function setupLogout() {
   document.getElementById('logout-btn').addEventListener('click', async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await fetch('/api/auth/logout', { method: 'POST', cache: 'no-store' });
     } catch (e) {}
     localStorage.removeItem('mofidul_admin_token');
     authToken = null;
@@ -462,7 +463,8 @@ function setupLogout() {
 }
 
 /**
- * Authenticated fetch helper that handles JWT header and 401 redirects
+ * Authenticated fetch helper that handles JWT header and 401 redirects.
+ * Always sets cache: 'no-store' to guarantee fresh data on every operation.
  */
 async function apiFetch(url, options = {}) {
   const headers = options.headers || {};
@@ -475,6 +477,7 @@ async function apiFetch(url, options = {}) {
   }
 
   options.headers = headers;
+  options.cache = 'no-store';
 
   const res = await fetch(url, options);
   if (res.status === 401) {

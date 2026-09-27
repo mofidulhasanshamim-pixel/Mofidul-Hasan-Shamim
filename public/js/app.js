@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 async function initApp() {
   try {
-    const response = await fetch('/api/public/content');
+    const response = await fetch('/api/public/content', { cache: 'no-store' });
     if (!response.ok) throw new Error('Network response was not ok');
     
     const { success, data } = await response.json();

@@ -1,11 +1,14 @@
-const { DatabaseSync } = require('node:sqlite');
 const path = require('path');
+// Always load environment variables anchored to root directory
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+const { DatabaseSync } = require('node:sqlite');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
 
-// Ensure data and uploads directories exist
-const dataDir = path.resolve(process.env.DATA_DIR || './data');
-const uploadDir = path.resolve(process.env.UPLOAD_DIR || './public/uploads');
+// Ensure data and uploads directories exist anchored to workspace root (independent of process.cwd())
+const ROOT_DIR = path.resolve(__dirname, '..');
+const dataDir = path.resolve(process.env.DATA_DIR || path.join(ROOT_DIR, 'data'));
+const uploadDir = path.resolve(process.env.UPLOAD_DIR || path.join(ROOT_DIR, 'public', 'uploads'));
 
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
@@ -17,16 +20,46 @@ if (!fs.existsSync(uploadDir)) {
 const dbPath = path.join(dataDir, 'portfolio.db');
 const db = new DatabaseSync(dbPath);
 
-// Enable WAL mode and foreign key constraints for high reliability
+// Enable WAL mode, concurrency pragmas, auto-checkpointing, and foreign key constraints
 db.exec('PRAGMA journal_mode = WAL;');
 db.exec('PRAGMA synchronous = NORMAL;');
 db.exec('PRAGMA foreign_keys = ON;');
+db.exec('PRAGMA busy_timeout = 5000;');
+db.exec('PRAGMA cache_size = -20000;');
+db.exec('PRAGMA temp_store = MEMORY;');
+db.exec('PRAGMA wal_autocheckpoint = 100;');
 
-function checkpointDb() {
+/**
+ * Flush WAL journal pages directly into the primary portfolio.db file on disk.
+ * TRUNCATE mode merges all committed WAL frames and resets the WAL file to 0 bytes.
+ */
+function checkpointDb(mode = 'TRUNCATE') {
   try {
-    db.exec('PRAGMA wal_checkpoint(PASSIVE);');
+    const validModes = ['PASSIVE', 'FULL', 'RESTART', 'TRUNCATE'];
+    const chosenMode = validModes.includes(mode) ? mode : 'TRUNCATE';
+    db.exec(`PRAGMA wal_checkpoint(${chosenMode});`);
   } catch (e) {
     console.warn('WAL checkpoint warning:', e.message);
+  }
+}
+
+function optimizeDb() {
+  try {
+    db.exec('PRAGMA optimize;');
+  } catch (e) {
+    console.warn('DB optimize warning:', e.message);
+  }
+}
+
+function closeDb() {
+  try {
+    checkpointDb('TRUNCATE');
+    optimizeDb();
+    if (typeof db.close === 'function') {
+      db.close();
+    }
+  } catch (e) {
+    console.warn('DB close warning:', e.message);
   }
 }
 
@@ -779,6 +812,8 @@ runMigrations();
 seedInitialData();
 
 db.checkpointDb = checkpointDb;
+db.optimizeDb = optimizeDb;
+db.closeDb = closeDb;
 
 module.exports = db;
 

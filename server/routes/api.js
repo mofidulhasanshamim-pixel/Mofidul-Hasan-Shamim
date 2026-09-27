@@ -7,8 +7,54 @@ const jwt = require('jsonwebtoken');
 const db = require('../db');
 const { requireAuth, JWT_SECRET } = require('../middleware/auth');
 const upload = require('../middleware/upload');
+const { createRateLimiter } = require('../middleware/rateLimiter');
+const { invalidateSeoCache } = require('../seo');
 
-const uploadDir = path.resolve(process.env.UPLOAD_DIR || './public/uploads');
+const ROOT_DIR = path.resolve(__dirname, '../..');
+const uploadDir = path.resolve(process.env.UPLOAD_DIR || path.join(ROOT_DIR, 'public', 'uploads'));
+
+// Anti-caching headers on all API endpoints so browsers never serve stale cached data
+router.use('/api', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  next();
+});
+
+// Immediate SQLite WAL sync to disk and SEO cache invalidation on any mutation (POST, PUT, PATCH, DELETE)
+router.use('/api', (req, res, next) => {
+  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
+    res.on('finish', () => {
+      if (res.statusCode >= 200 && res.statusCode < 400) {
+        try {
+          if (typeof db.checkpointDb === 'function') {
+            db.checkpointDb('TRUNCATE');
+          }
+          if (typeof invalidateSeoCache === 'function') {
+            invalidateSeoCache();
+          }
+        } catch (err) {
+          console.warn('Post-mutation checkpoint warning:', err.message);
+        }
+      }
+    });
+  }
+  next();
+});
+
+// Rate limiters for abuse prevention
+const contactLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 25,
+  message: 'Too many contact inquiries from this IP. Please wait a few minutes before submitting again.'
+});
+
+const loginLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 40,
+  message: 'Too many login attempts from this IP. Please wait 15 minutes before trying again.'
+});
 
 // ==========================================
 // 1. PUBLIC API ROUTES
@@ -25,8 +71,8 @@ router.get('/api/public/content', (req, res) => {
     const about = db.prepare('SELECT * FROM about_content WHERE id = 1').get() || {};
     const contact = db.prepare('SELECT * FROM contact_info WHERE id = 1').get() || {};
 
-    const services = db.prepare("SELECT * FROM services WHERE is_active = 1 AND (status = 'published' OR status IS NULL OR status = '') ORDER BY sort_order ASC, id ASC").all();
-    const projects = db.prepare("SELECT * FROM projects WHERE is_active = 1 AND (status = 'published' OR status IS NULL OR status = '') ORDER BY sort_order ASC, id ASC").all();
+    const services = db.prepare("SELECT * FROM services WHERE (is_active = 1 OR is_active IS NULL) AND (status = 'published' OR status IS NULL OR status = '') ORDER BY sort_order ASC, id ASC").all();
+    const projects = db.prepare("SELECT * FROM projects WHERE (is_active = 1 OR is_active IS NULL) AND (status = 'published' OR status IS NULL OR status = '') ORDER BY sort_order ASC, id ASC").all();
 
     // Attach gallery images to projects
     for (const project of projects) {
@@ -35,10 +81,10 @@ router.get('/api/public/content', (req, res) => {
 
     const skills = db.prepare("SELECT * FROM skills WHERE (status = 'published' OR status IS NULL OR status = '') ORDER BY sort_order ASC, id ASC").all();
     const experience = db.prepare("SELECT * FROM experience WHERE (status = 'published' OR status IS NULL OR status = '') ORDER BY sort_order ASC, id ASC").all();
-    const statistics = db.prepare('SELECT * FROM statistics WHERE is_active = 1 ORDER BY sort_order ASC, id ASC').all();
-    const testimonials = db.prepare("SELECT * FROM testimonials WHERE is_active = 1 AND (status = 'published' OR status IS NULL OR status = '') ORDER BY sort_order ASC, id ASC").all();
-    const social_links = db.prepare('SELECT * FROM social_links WHERE is_active = 1 ORDER BY sort_order ASC, id ASC').all();
-    const navigation = db.prepare('SELECT * FROM navigation_links WHERE is_active = 1 ORDER BY sort_order ASC, id ASC').all();
+    const statistics = db.prepare('SELECT * FROM statistics WHERE (is_active = 1 OR is_active IS NULL) ORDER BY sort_order ASC, id ASC').all();
+    const testimonials = db.prepare("SELECT * FROM testimonials WHERE (is_active = 1 OR is_active IS NULL) AND (status = 'published' OR status IS NULL OR status = '') ORDER BY sort_order ASC, id ASC").all();
+    const social_links = db.prepare('SELECT * FROM social_links WHERE (is_active = 1 OR is_active IS NULL) ORDER BY sort_order ASC, id ASC').all();
+    const navigation = db.prepare('SELECT * FROM navigation_links WHERE (is_active = 1 OR is_active IS NULL) ORDER BY sort_order ASC, id ASC').all();
     const sections = db.prepare('SELECT * FROM section_settings ORDER BY sort_order ASC, id ASC').all();
 
     res.json({
@@ -93,7 +139,7 @@ router.get('/api/public/projects/:slug', (req, res) => {
  * POST /api/public/contact
  * Handles contact form submissions from visitors
  */
-router.post('/api/public/contact', (req, res) => {
+router.post('/api/public/contact', contactLimiter, (req, res) => {
   try {
     const { name, email, subject, message } = req.body;
 
@@ -131,7 +177,7 @@ router.post('/api/public/contact', (req, res) => {
  * POST /api/auth/login
  * Authenticates admin user and returns JWT token + sets HTTP-only cookie
  */
-router.post('/api/auth/login', (req, res) => {
+router.post('/api/auth/login', loginLimiter, (req, res) => {
   try {
     const { username, password } = req.body;
 

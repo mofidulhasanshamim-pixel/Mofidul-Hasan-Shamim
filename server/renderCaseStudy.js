@@ -13,7 +13,7 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
-function renderCaseStudy(project, allProjects = []) {
+function renderCaseStudy(project, allProjects = [], isDraftPreview = false) {
   const title = escapeHtml(project.seo_title || project.title);
   const desc = escapeHtml(project.seo_description || project.short_desc || 'Case study by Mofidul, Creative Director and Brand Designer.');
   const canonicalUrl = `https://mofidul.com/work/${escapeHtml(project.slug || project.id)}`;
@@ -24,6 +24,10 @@ function renderCaseStudy(project, allProjects = []) {
   const currentIndex = allProjects.findIndex(p => p.id === project.id);
   const nextProject = currentIndex >= 0 && currentIndex < allProjects.length - 1 ? allProjects[currentIndex + 1] : allProjects[0];
 
+  // Calculate dynamic reading time estimate
+  const narrativeWords = `${project.short_desc || ''} ${project.full_desc || ''} ${project.challenge || ''} ${project.solution || ''} ${project.results || ''}`;
+  const readTimeMin = Math.max(1, Math.ceil(narrativeWords.trim().split(/\s+/).filter(Boolean).length / 180));
+
   // Parse comma-separated lists
   const servicesList = (project.services_used || '').split(',').map(s => s.trim()).filter(Boolean);
   const techList = (project.technologies || '').split(',').map(t => t.trim()).filter(Boolean);
@@ -32,6 +36,34 @@ function renderCaseStudy(project, allProjects = []) {
 
   const galleryImages = Array.isArray(project.gallery) ? project.gallery : [];
 
+  // Schema.org CreativeWork JSON-LD
+  const jsonLd = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'CreativeWork',
+    'name': project.title,
+    'headline': project.title,
+    'description': project.seo_description || project.short_desc || 'Case study by Mofidul',
+    'image': fullOgImage,
+    'url': canonicalUrl,
+    'genre': project.category || 'Creative Direction',
+    'datePublished': project.created_at ? new Date(project.created_at).toISOString() : '2026-01-01T00:00:00Z',
+    'dateModified': project.updated_at ? new Date(project.updated_at).toISOString() : new Date().toISOString(),
+    'author': {
+      '@type': 'Person',
+      'name': 'Mofidul',
+      'jobTitle': 'Creative Director & Brand Designer',
+      'url': 'https://mofidul.com'
+    },
+    'creator': {
+      '@type': 'Person',
+      'name': 'Mofidul'
+    },
+    'publisher': {
+      '@type': 'Person',
+      'name': 'Mofidul'
+    }
+  });
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -39,10 +71,14 @@ function renderCaseStudy(project, allProjects = []) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${title} — Mofidul</title>
   <meta name="description" content="${desc}" />
+  <meta name="author" content="Mofidul" />
+  <meta name="theme-color" content="#030308" />
   <link rel="canonical" href="${canonicalUrl}" />
 
   <!-- Open Graph / Social Meta -->
   <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="Mofidul Portfolio" />
+  <meta property="og:locale" content="en_US" />
   <meta property="og:url" content="${canonicalUrl}" />
   <meta property="og:title" content="${title} — Mofidul" />
   <meta property="og:description" content="${desc}" />
@@ -57,6 +93,10 @@ function renderCaseStudy(project, allProjects = []) {
   <!-- Favicons -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="alternate icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" href="/favicon.svg" />
+
+  <!-- Schema.org JSON-LD Structured Data -->
+  <script type="application/ld+json">${jsonLd}</script>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -284,13 +324,58 @@ function renderCaseStudy(project, allProjects = []) {
     .next-project-title:hover {
       color: var(--accent);
     }
+    .draft-preview-bar {
+      position: sticky;
+      top: 0;
+      z-index: 1200;
+      background: rgba(245, 158, 11, 0.18);
+      border-bottom: 1px solid rgba(245, 158, 11, 0.45);
+      backdrop-filter: blur(16px);
+      padding: 10px 24px;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #fbbf24;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+    .draft-indicator-pulse {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #fbbf24;
+      box-shadow: 0 0 10px #fbbf24;
+      animation: draftPulse 1.5s infinite;
+      flex-shrink: 0;
+    }
+    @keyframes draftPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(0.85); }
+    }
+    .btn-share {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body class="case-study-page">
 
-  <!-- Transparent Water-Lens Cursor -->
-  <div id="cursor-water-drop" class="cursor-water-drop" aria-hidden="true">
-    <div class="water-specular-glint"></div>
+  ${isDraftPreview ? `
+    <div class="draft-preview-bar">
+      <span class="draft-indicator-pulse"></span>
+      <span><strong>PRIVATE DRAFT PREVIEW</strong> — This case study is unpublished. Visible only to authenticated administrators.</span>
+    </div>
+  ` : ''}
+
+  <!-- Cursor Colored Liquid-Water Interaction -->
+  <div class="cursor-water-drop" id="cursor-water-drop" aria-hidden="true">
+    <div class="water-drop-glass"></div>
+    <div class="water-drop-liquid water-drop-rim"></div>
+    <div class="water-drop-sheen water-drop-highlight"></div>
   </div>
 
   <!-- Header -->
@@ -390,6 +475,11 @@ function renderCaseStudy(project, allProjects = []) {
           <div>
             <div class="meta-col-label">Year</div>
             <div class="meta-col-val">${escapeHtml(project.year || '2025')}</div>
+          </div>
+
+          <div>
+            <div class="meta-col-label">Read Time</div>
+            <div class="meta-col-val">${readTimeMin} min read</div>
           </div>
         </div>
 
@@ -495,6 +585,15 @@ function renderCaseStudy(project, allProjects = []) {
             </a>
           ` : ''}
 
+          <button id="share-case-btn" type="button" class="btn btn-secondary btn-share" onclick="shareCaseStudy()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+              <polyline points="16 6 12 2 8 6"></polyline>
+              <line x1="12" y1="2" x2="12" y2="15"></line>
+            </svg>
+            <span id="share-btn-text">Share Project</span>
+          </button>
+
           <a href="${escapeHtml(project.cta_url || '/#contact')}" class="btn btn-primary" style="margin-left: auto;">
             <span>${escapeHtml(project.cta_text || 'Inquire for Similar Project')}</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -576,22 +675,69 @@ function renderCaseStudy(project, allProjects = []) {
       if (e.key === 'Escape') closeLightbox();
     });
 
-    // Water Drop Cursor
+    // Native Web Share with Clipboard Fallback
+    function shareCaseStudy() {
+      const shareData = {
+        title: document.title,
+        text: ${JSON.stringify(project.short_desc || project.title)},
+        url: window.location.href
+      };
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        navigator.share(shareData).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(window.location.href).then(() => {
+          const btnText = document.getElementById('share-btn-text');
+          if (btnText) {
+            const orig = btnText.textContent;
+            btnText.textContent = 'Link Copied! ✓';
+            setTimeout(() => { btnText.textContent = orig; }, 2500);
+          }
+        }).catch(() => {});
+      }
+    }
+
+    // Liquid Inertia Water Drop Cursor
     const cursorDrop = document.getElementById('cursor-water-drop');
     if (cursorDrop && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
-      let mx = -100, my = -100, cx = -100, cy = -100;
+      let mouseX = -100, mouseY = -100;
+      let dropX = -100, dropY = -100;
+      let prevX = -100, prevY = -100;
+      let isVisible = false;
+
       window.addEventListener('mousemove', (e) => {
-        mx = e.clientX;
-        my = e.clientY;
-        cursorDrop.classList.add('active');
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        if (!isVisible) {
+          isVisible = true;
+          dropX = mouseX;
+          dropY = mouseY;
+          prevX = mouseX;
+          prevY = mouseY;
+          cursorDrop.classList.add('active');
+        }
       });
+
       document.addEventListener('mouseleave', () => {
         cursorDrop.classList.remove('active');
+        isVisible = false;
       });
+
       function loop() {
-        cx += (mx - cx) * 0.40;
-        cy += (my - cy) * 0.40;
-        cursorDrop.style.transform = 'translate3d(' + cx + 'px, ' + cy + 'px, 0) translate(-50%, -50%) scale(1.08)';
+        if (isVisible) {
+          dropX += (mouseX - dropX) * 0.135;
+          dropY += (mouseY - dropY) * 0.135;
+
+          const vx = dropX - prevX;
+          const vy = dropY - prevY;
+          const speed = Math.sqrt(vx * vx + vy * vy);
+          const angle = Math.atan2(vy, vx) * (180 / Math.PI);
+          const stretch = Math.min(speed * 0.016, 0.22);
+
+          cursorDrop.style.transform = 'translate3d(' + dropX + 'px, ' + dropY + 'px, 0) translate(-50%, -50%) rotate(' + angle + 'deg) scale(' + (1 + stretch) + ', ' + (1 - stretch * 0.6) + ')';
+
+          prevX = dropX;
+          prevY = dropY;
+        }
         requestAnimationFrame(loop);
       }
       requestAnimationFrame(loop);
